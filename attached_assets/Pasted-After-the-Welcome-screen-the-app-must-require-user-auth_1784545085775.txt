@@ -1,0 +1,43 @@
+After the Welcome screen, the app must require user authentication before any feature can be accessed.
+
+Issue
+
+The app currently bypasses authentication and opens directly to the Home screen, allowing users to access the application without logging in.
+
+Required Fix
+
+Implement a robust authentication gate at the application's root navigation.
+
+On app launch, immediately verify the user's authentication session (token, Firebase Auth, OAuth session, etc.).
+If there is no valid or active session, redirect the user directly to the Login screen.
+Completely block access to Home, Search, Library, Downloads, Profile, Settings, and all other protected screens until authentication succeeds.
+The Login screen must be the first screen displayed after the Welcome screen whenever the user is not authenticated.
+Design the Login screen to match the app's existing premium dark theme, animations, typography, and overall UI style. It should feel like a native part of the application—not a generic placeholder or default authentication page.
+Session Management
+
+Implement proper session persistence.
+
+Store authentication credentials securely using the platform's secure storage.
+Automatically restore valid sessions on app startup.
+Refresh authentication tokens when required.
+Only require users to log in again when their session is invalid, expired, revoked, or after they explicitly log out.
+Never force users to log in again simply because the app was closed or restarted.
+Startup Flow
+
+Prevent UI flickering during authentication checks.
+
+Display a branded splash/loading screen while validating the authentication state.
+Do not render or briefly display the Home screen before the authentication check completes.
+Navigation should occur only after the authentication status has been fully determined.
+Security Requirements
+Enforce authentication at the root navigator rather than relying only on individual screen checks.
+Prevent deep links or back navigation from accessing protected screens when the user is not authenticated.
+Ensure logout completely clears all stored authentication data and returns the user to the Login screen.
+Acceptance Criteria
+Fresh install: Welcome → Login (Home is inaccessible until login).
+Logged-out user: Login is the only reachable screen.
+Successful login: User is redirected to Home and can access all authenticated features.
+App restart with a valid session: User is taken directly to Home without seeing the Login screen.
+Expired or invalid session: User is automatically redirected to the Login screen.
+No flashing of Home or protected screens before authentication is verified.
+Authentication flow is smooth, secure, production-ready, and fully integrated with the app's existing design language.

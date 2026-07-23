@@ -1,0 +1,179 @@
+package ca.ilianokokoro.umihi.music.core.workers
+
+import android.content.Context
+import androidx.work.CoroutineWorker
+import androidx.work.WorkerParameters
+import ca.ilianokokoro.umihi.music.core.ApiResult
+import ca.ilianokokoro.umihi.music.core.Constants
+import ca.ilianokokoro.umihi.music.core.helpers.DownloadHelper
+import ca.ilianokokoro.umihi.music.core.helpers.LogHelper.printd
+import ca.ilianokokoro.umihi.music.core.helpers.LogHelper.printe
+import ca.ilianokokoro.umihi.music.core.managers.NotificationManager
+import ca.ilianokokoro.umihi.music.data.database.AppDatabase
+import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository
+import ca.ilianokokoro.umihi.music.data.repositories.LyricsRepository
+import ca.ilianokokoro.umihi.music.data.repositories.SongRepository
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
+import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.concurrent.atomics.incrementAndFetch
+import kotlin.coroutines.cancellation.CancellationException
+
+class PlaylistDownloadWorker(
+    private val appContext: Context,
+    private val params: WorkerParameters
+) :
+    CoroutineWorker(appContext, params) {
+
+    private val playlistRepository = AppDatabase.getInstance(appContext).playlistRepository()
+    private val localSongRepository = AppDatabase.getInstance(appContext).songRepository()
+    private val songRepository = SongRepository()
+
+    @OptIn(ExperimentalAtomicApi::class)
+    override suspend fun doWork(): Result {
+        val playlistId = params.inputData.getString(PLAYLIST_KEY)
+            ?: return Result.failure()
+
+        val playlist = playlistRepository.getPlaylistById(playlistId)
+            ?: return Result.failure()
+
+        return try {
+            val totalSongs = playlist.songs.size
+            val downloadedSongs = AtomicInt(0)
+
+            NotificationManager.showPlaylistDownloadProgress(
+                appContext,
+                playlist,
+                0,
+                totalSongs
+            )
+
+            // Read user-selected download path from settings
+            val customBasePath = DatastoreRepository(appContext).getSettings().downloadPath
+
+            val playlistImage = DownloadHelper.downloadImage(
+                appContext,
+                playlist.info.coverHref,
+                playlist.info.id,
+                customBasePath
+            )
+
+            playlistRepository.insertPlaylist(
+                playlist.info.copy(
+                    coverPath = playlistImage?.path
+                )
+            )
+
+            val semaphore = Semaphore(Constants.Downloads.MAX_CONCURRENT_DOWNLOADS)
+
+            coroutineScope {
+                playlist.songs.map { song ->
+                    async {
+                        semaphore.withPermit {
+                            try {
+                                val fullSongData = songRepository
+                                    .getSongInfo(song.youtubeId)
+                                    .first { it is ApiResult.Success }
+
+                                val fullSong = (fullSongData as ApiResult.Success).data
+
+                                val audioPath = DownloadHelper.downloadAudio(
+                                    appContext, song, customBasePath = customBasePath
+                                )
+
+                                val thumbnailPath = DownloadHelper.downloadImage(
+                                    appContext,
+                                    fullSong.thumbnailHref,
+                                    song.youtubeId,
+                                    customBasePath
+                                )
+
+                                // Always write authoritative metadata from the API response.
+                                // The locally stored `song` may have blank title/artist if it
+                                // was first persisted as a skeleton record by setStreamUrl().
+                                val updatedSong = song.copy(
+                                    title         = fullSong.title.takeIf { it.isNotBlank() } ?: song.title,
+                                    artist        = fullSong.artist.takeIf { it.isNotBlank() } ?: song.artist,
+                                    duration      = fullSong.duration.takeIf { it.isNotBlank() } ?: song.duration,
+                                    thumbnailHref = fullSong.thumbnailHref.takeIf { it.isNotBlank() } ?: song.thumbnailHref,
+                                    isExplicit    = fullSong.isExplicit,
+                                    thumbnailPath = thumbnailPath?.path,
+                                    audioFilePath = audioPath,
+                                )
+
+                                localSongRepository.create(updatedSong)
+
+                                // Cache lyrics for offline playback
+                                try {
+                                    val lyricsRepo = LyricsRepository(appContext)
+                                    val durationSec = run {
+                                        val parts = song.duration.trim().split(":").map { it.toIntOrNull() ?: 0 }
+                                        when (parts.size) {
+                                            2 -> parts[0] * 60 + parts[1]
+                                            3 -> parts[0] * 3600 + parts[1] * 60 + parts[2]
+                                            else -> null
+                                        }
+                                    }
+                                    lyricsRepo.getLyrics(
+                                        videoId = song.youtubeId,
+                                        title = song.title,
+                                        artist = song.artist,
+                                        durationSeconds = durationSec
+                                    )
+                                } catch (e: Exception) {
+                                    printe("Lyrics fetch skipped for ${song.youtubeId}: ${e.message}", exception = e)
+                                }
+
+                                val downloaded = downloadedSongs.incrementAndFetch()
+                                if (downloaded < totalSongs) {
+                                    NotificationManager.showPlaylistDownloadProgress(
+                                        appContext,
+                                        playlist,
+                                        downloaded,
+                                        totalSongs
+                                    )
+                                }
+                            } catch (e: CancellationException) {
+                                printd("Song download canceled ${song.title}")
+                                throw e
+                            } catch (e: Exception) {
+                                NotificationManager.showSongDownloadFailed(
+                                    appContext,
+                                    song
+                                )
+
+                                printe(
+                                    message = "Error downloading song: ${song.title}",
+                                    exception = e
+                                )
+                            }
+                        }
+                    }
+                }.awaitAll()
+            }
+
+            NotificationManager.showPlaylistDownloadSuccess(appContext, playlist)
+            printd("Playlist download complete")
+
+            Result.success()
+        } catch (_: CancellationException) {
+            NotificationManager.showPlaylistDownloadCanceled(appContext, playlist)
+            printd("Playlist download canceled ${playlist.info.title}")
+            Result.failure()
+        } catch (e: Exception) {
+            NotificationManager.showPlaylistDownloadFailure(appContext, playlist)
+            printe(message = e.toString(), exception = e)
+            Result.failure()
+        }
+    }
+
+
+    companion object {
+        const val PLAYLIST_KEY = "playlist"
+    }
+}

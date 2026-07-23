@@ -1,0 +1,219 @@
+package ca.ilianokokoro.umihi.music.ui.components.song
+
+import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
+import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.DownloadForOffline
+import androidx.compose.material.icons.rounded.LibraryAdd
+import androidx.compose.material.icons.rounded.LibraryAddCheck
+import androidx.compose.material.icons.rounded.DeleteOutline
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.PlaylistRemove
+import androidx.compose.material.icons.rounded.PlayCircleOutline
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import ca.ilianokokoro.umihi.music.R
+import ca.ilianokokoro.umihi.music.models.Song
+import ca.ilianokokoro.umihi.music.ui.components.SquareImage
+import ca.ilianokokoro.umihi.music.ui.components.materialu.dropdown.MaterialUDropdown
+import ca.ilianokokoro.umihi.music.ui.components.materialu.dropdown.MaterialUDropdownItem
+
+@Composable
+fun SongListItem(
+    song: Song,
+    onPress: () -> Unit,
+    playNext: () -> Unit,
+    addToQueue: () -> Unit,
+    modifier: Modifier = Modifier,
+    download: (() -> Unit)? = null,
+    /** Remove a downloaded song's local files; only shown when [Song.downloaded] is true. */
+    deleteDownload: (() -> Unit)? = null,
+    addToPlaylist: (() -> Unit)? = null,
+    /** When non-null the item is shown inside a playlist: show "Remove" instead of "Add to Playlist". */
+    removeFromPlaylist: (() -> Unit)? = null,
+    /**
+     * Whether this song belongs to at least one playlist in the local library.
+     * When true, a coloured [LibraryAddCheck] tick icon is shown as a quick visual cue
+     * and tapping it opens [onManagePlaylist].
+     */
+    isInPlaylist: Boolean = false,
+    /**
+     * Called when the user taps the tick badge (isInPlaylist = true).
+     * Typically opens a management sheet where they can remove / move the song.
+     */
+    onManagePlaylist: (() -> Unit)? = null,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ListItem(
+        modifier = modifier
+            .combinedClickable(onClick = onPress, onLongClick = { expanded = true }),
+        leadingContent = {
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .aspectRatio(1f)
+            ) {
+                SquareImage(
+                    uri = song.thumbnailPath ?: song.thumbnailHref,
+                    modifier = Modifier.matchParentSize()
+                )
+            }
+        },
+        trailingContent = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Playlist membership tick — visible when the song is in any playlist.
+                // Tapping it opens the management sheet rather than the overflow menu.
+                if (isInPlaylist && onManagePlaylist != null) {
+                    IconButton(onClick = onManagePlaylist) {
+                        Icon(
+                            imageVector = Icons.Rounded.LibraryAddCheck,
+                            contentDescription = stringResource(R.string.in_playlist_desc),
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
+                IconButton(onClick = { expanded = true }) {
+                    Icon(
+                        Icons.Rounded.MoreVert,
+                        contentDescription = stringResource(R.string.more)
+                    )
+                }
+                MaterialUDropdown(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                ) {
+                    MaterialUDropdownItem(
+                        leadingIcon = Icons.Rounded.PlayCircleOutline,
+                        text = stringResource(R.string.play_next),
+                        onClick = {
+                            playNext()
+                            expanded = false
+                        }
+                    )
+                    MaterialUDropdownItem(
+                        leadingIcon = Icons.AutoMirrored.Rounded.PlaylistPlay,
+                        text = stringResource(R.string.add_to_queue),
+                        onClick = {
+                            addToQueue()
+                            expanded = false
+                        }
+                    )
+                    if (download != null && !song.downloaded) {
+                        MaterialUDropdownItem(
+                            leadingIcon = Icons.Rounded.Download,
+                            text = stringResource(R.string.download),
+                            onClick = {
+                                download()
+                                expanded = false
+                            }
+                        )
+                    }
+                    if (deleteDownload != null && song.downloaded) {
+                        MaterialUDropdownItem(
+                            leadingIcon = Icons.Rounded.DeleteOutline,
+                            text = stringResource(R.string.remove_download),
+                            onClick = {
+                                deleteDownload()
+                                expanded = false
+                            }
+                        )
+                    }
+                    if (removeFromPlaylist != null) {
+                        // Inside a playlist — show "Remove from Playlist"
+                        MaterialUDropdownItem(
+                            leadingIcon = Icons.Rounded.PlaylistRemove,
+                            text = stringResource(R.string.remove_from_playlist),
+                            onClick = {
+                                removeFromPlaylist()
+                                expanded = false
+                            }
+                        )
+                    }
+                    // Always show "Add to Playlist" in the overflow menu.
+                    // When the song is already in a playlist the management sheet is more
+                    // appropriate (accessible via the tick icon), but we keep this entry so the
+                    // user can add the song to an *additional* playlist without leaving the menu.
+                    if (isInPlaylist && onManagePlaylist != null) {
+                        MaterialUDropdownItem(
+                            leadingIcon = Icons.Rounded.LibraryAddCheck,
+                            text = stringResource(R.string.manage_playlists),
+                            onClick = {
+                                expanded = false
+                                onManagePlaylist()
+                            }
+                        )
+                    } else if (addToPlaylist != null) {
+                        MaterialUDropdownItem(
+                            leadingIcon = Icons.Rounded.LibraryAdd,
+                            text = stringResource(R.string.add_to_playlist),
+                            onClick = {
+                                addToPlaylist()
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+            }
+        },
+        supportingContent = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
+                if (song.downloaded) {
+                    Icon(
+                        modifier = Modifier.size(16.dp),
+                        imageVector = Icons.Rounded.DownloadForOffline,
+                        contentDescription = null
+                    )
+                }
+
+                if (song.isExplicit) {
+                    ExplicitBadge()
+                }
+
+                Text(
+                    text = "${song.artist} ${stringResource(R.string.dot)} ${song.duration}",
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.basicMarquee()
+                )
+            }
+        },
+        colors = ListItemDefaults.colors(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = song.title,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.basicMarquee()
+        )
+    }
+}

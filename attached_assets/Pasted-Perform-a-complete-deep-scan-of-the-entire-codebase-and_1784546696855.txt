@@ -1,0 +1,292 @@
+Perform a complete deep scan of the entire codebase and resolve every issue preventing the application from being production-ready. Do not apply temporary workarounds or superficial fixes—identify the root cause of every problem and implement proper, maintainable solutions.
+
+1. Full Codebase Audit
+
+Perform a comprehensive analysis of:
+
+All source code
+Architecture and project structure
+Navigation
+Authentication
+API integrations
+Database operations
+State management
+Background services
+Media playback
+Downloads
+Offline mode
+Caching
+Local storage
+Search
+Settings
+Notifications
+UI/UX
+Performance
+Memory usage
+Battery usage
+Security
+Build configuration
+Gradle dependencies
+Manifest
+Permissions
+Release configuration
+
+Identify and fix:
+
+Logic bugs
+Runtime crashes
+Null pointer exceptions
+Memory leaks
+Threading/concurrency issues
+Race conditions
+Infinite loops
+Dead code
+Duplicate code
+Deprecated APIs
+Performance bottlenecks
+Security vulnerabilities
+UI inconsistencies
+Navigation issues
+2. Authentication
+
+Deep scan the entire authentication flow.
+
+Ensure:
+
+Login is mandatory before accessing the app.
+Session persistence works correctly.
+Secure token storage.
+Auto-login with valid session.
+Logout clears all data correctly.
+No protected screen is accessible without authentication.
+No Home screen flash before auth verification.
+Proper loading state during auth check.
+3. Music Playback
+
+Verify every playback scenario.
+
+Fix:
+
+Songs not playing
+Random playback failures
+Queue issues
+Next/Previous bugs
+Repeat and Shuffle problems
+Playback resume
+Audio focus handling
+Background playback
+Lock screen controls
+Notification controls
+Bluetooth controls
+Headphone controls
+Playback after app restart
+
+Ensure stable playback under all conditions.
+
+4. Lyrics
+
+Deep scan the lyrics system.
+
+Fix:
+
+Lyrics not loading
+Failed API requests
+Wrong lyrics
+Missing lyrics
+Time-synced lyrics
+Highlight synchronization
+Auto scrolling
+Timestamp alignment
+Retry mechanism
+Offline cached lyrics
+5. Downloads
+
+Verify the complete download pipeline.
+
+Fix:
+
+Download button not changing after download
+Download progress issues
+Duplicate downloads
+Corrupted downloads
+Missing downloaded songs
+Offline playback
+Download cancellation
+Resume downloads
+Delete downloads
+Storage permission handling
+
+Downloaded songs should immediately display a checkmark instead of the download button.
+
+6. Offline Mode
+
+Ensure:
+
+Offline playback works perfectly.
+Cached music loads correctly.
+Downloads are detected instantly.
+Offline search functions correctly.
+No crashes without internet.
+7. Library
+
+Verify:
+
+Favorites
+Playlists
+History
+Recently Played
+Liked Songs
+Downloads
+
+Fix synchronization issues.
+
+8. Search
+
+Improve:
+
+Speed
+Accuracy
+Empty states
+Loading indicators
+Retry handling
+Network error recovery
+9. UI/UX
+
+Perform a complete UI polish.
+
+Fix:
+
+Alignment issues
+Padding
+Margins
+Animations
+Screen transitions
+Overflow
+Clipping
+Incorrect colors
+Typography
+Icons
+Dark mode consistency
+Loading indicators
+Skeleton screens
+Error screens
+Empty states
+
+Ensure every screen feels modern, polished, and professional.
+
+10. Performance Optimization
+
+Optimize:
+
+Startup time
+Memory usage
+CPU usage
+Network requests
+Image loading
+Cache management
+Database queries
+Lazy loading
+RecyclerView/List performance
+Large playlist rendering
+
+Remove unnecessary processing.
+
+11. API Layer
+
+Verify:
+
+All API endpoints
+Error handling
+Retry logic
+Timeout handling
+Rate limits
+Response validation
+JSON parsing
+Authentication headers
+Network recovery
+
+No API call should fail silently.
+
+12. Error Handling
+
+Replace silent failures with:
+
+Proper logging
+User-friendly error messages
+Retry actions
+Graceful recovery
+
+No crashes should occur from network or parsing failures.
+
+13. Security
+
+Audit:
+
+Token storage
+API keys
+Secrets
+Local storage
+Permissions
+Intent security
+Exported activities
+Input validation
+SQL injection risks
+XSS risks (if applicable)
+
+Move all sensitive information to secure storage.
+
+14. Build System
+
+Verify:
+
+Gradle configuration
+Dependencies
+Version compatibility
+Release build
+ProGuard/R8
+Resource shrinking
+APK generation
+Signing configuration
+
+Resolve all build warnings and errors.
+
+15. Code Quality
+
+Refactor where necessary.
+
+Remove:
+
+Dead code
+Duplicate logic
+Unused imports
+Deprecated APIs
+Code smells
+Inefficient implementations
+
+Improve readability and maintainability without changing intended functionality.
+
+16. Production Readiness Checklist
+
+Ensure:
+
+No crashes
+No ANRs
+No memory leaks
+No broken navigation
+No placeholder UI
+No debug code
+No TODOs left unresolved
+No hardcoded secrets
+No broken features
+No unfinished screens
+Final Deliverables
+
+After completing the deep scan:
+
+Fix every identified issue.
+Explain the root cause of each major bug.
+List every file modified.
+Summarize all improvements.
+Ensure the project builds successfully in Debug and Release modes.
+Verify that all major user flows (authentication, playback, downloads, lyrics, search, offline mode, playlists, and settings) work correctly.
+Leave the application in a stable, secure, optimized, polished, and production-ready state with no known critical issues remaining.

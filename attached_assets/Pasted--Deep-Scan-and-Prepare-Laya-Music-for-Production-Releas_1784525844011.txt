@@ -1,0 +1,223 @@
+# Deep Scan and Prepare Laya Music for Production Release
+
+Perform a complete deep scan of the entire repository and prepare the project for a production-ready release.
+
+## Primary Goals
+
+* Deep scan every file in the repository.
+* Detect and fix all compile errors, runtime errors, crashes, warnings, and broken dependencies.
+* Ensure the project builds successfully with **no Gradle or Kotlin errors**.
+* Remove unused code, duplicate code, deprecated APIs, and dead resources.
+* Optimize project structure for long-term maintenance.
+* Verify compatibility with the latest stable Android SDK, Kotlin, Gradle, and AndroidX libraries.
+
+---
+
+# Production Readiness
+
+Make the application production-ready by improving:
+
+* Performance
+* Stability
+* Security
+* Memory usage
+* Battery usage
+* Network efficiency
+* Error handling
+* Offline handling
+* Logging
+* Null safety
+* Coroutine usage
+* Lifecycle management
+
+Replace debug implementations with production-safe implementations.
+
+Remove:
+
+* Debug logs
+* Test code
+* Temporary files
+* TODO placeholders
+* Mock implementations
+* Unused assets
+* Unused dependencies
+
+---
+
+# Fix Existing Features
+
+Deep scan every feature and fix any issues that prevent proper operation, including:
+
+* Music playback
+* Queue management
+* Background playback
+* Notifications
+* Media session
+* Lyrics synchronization
+* Lyrics loading
+* Search
+* Login
+* Profile loading
+* User avatar display
+* History synchronization
+* Playlist loading
+* Settings
+* Downloads
+* Cache
+* Network requests
+
+All features should work reliably without crashes.
+
+---
+
+# Code Quality
+
+Improve the overall codebase by:
+
+* Refactoring messy code
+* Removing duplicate logic
+* Improving architecture
+* Organizing packages
+* Following Material Design best practices
+* Following Kotlin best practices
+* Fixing lint issues
+* Fixing static analysis warnings
+* Improving readability
+* Improving maintainability
+
+---
+
+# UI Improvements
+
+Improve the UI while keeping the existing design language.
+
+Focus on:
+
+* Better animations
+* Smooth scrolling
+* Better loading states
+* Proper error states
+* Empty state screens
+* Better spacing
+* Responsive layouts
+* Consistent typography
+* Material 3 components
+* Dark mode support
+
+---
+
+# Build Configuration
+
+Ensure the project builds successfully using:
+
+* Latest stable Gradle
+* Latest stable Android Gradle Plugin
+* Latest stable Kotlin
+* Java 17 (or project-required version)
+
+Fix:
+
+* Gradle configuration
+* Dependency conflicts
+* Version mismatches
+* Manifest issues
+* Resource merge issues
+* Packaging conflicts
+* ProGuard/R8 configuration
+* Signing configuration (excluding private signing keys)
+
+The repository should build successfully from a clean clone.
+
+---
+
+# GitHub Actions
+
+Create a complete GitHub Actions workflow inside:
+
+```
+.github/workflows/
+```
+
+The workflow must:
+
+* Trigger automatically on:
+
+  * push
+  * pull_request
+  * workflow_dispatch
+  * release
+  * version tags
+
+The workflow should:
+
+1. Checkout the repository
+2. Set up Java
+3. Set up Gradle
+4. Cache Gradle dependencies
+5. Build the Release APK
+6. Verify the build succeeds
+7. Upload the generated APK as a workflow artifact
+8. Automatically create a GitHub Release when a version tag is pushed
+9. Upload the generated APK to the GitHub Release
+
+---
+
+# Release APK
+
+Generate a release APK named exactly:
+
+```
+laya.apk
+```
+
+The workflow should automatically rename the generated APK to:
+
+```
+laya.apk
+```
+
+before uploading it.
+
+---
+
+# Reliability
+
+The GitHub Actions workflow should:
+
+* Build successfully on a fresh GitHub runner
+* Avoid dependency resolution failures
+* Avoid Gradle daemon issues
+* Use dependency caching
+* Retry transient failures where appropriate
+* Produce consistent builds
+
+---
+
+# Validation
+
+Before considering the task complete, verify:
+
+* The project compiles successfully.
+* The Release APK builds without errors.
+* GitHub Actions completes successfully.
+* No missing resources exist.
+* No unresolved imports remain.
+* No Kotlin compile errors remain.
+* No Gradle sync errors remain.
+* No manifest merge errors remain.
+* No duplicate classes remain.
+* No packaging conflicts remain.
+* No runtime crashes caused by build configuration remain.
+
+---
+
+# Expected Result
+
+Deliver a fully production-ready Android application that:
+
+* Builds successfully on GitHub Actions
+* Automatically creates releases
+* Automatically uploads `laya.apk`
+* Compiles without errors or warnings that block release
+* Is optimized for performance, stability, and maintainability
+* Is ready for end users and production deployment

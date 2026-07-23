@@ -1,0 +1,95 @@
+Implement a Spotify/YouTube-Music-style synchronized lyrics feature in a Jetpack Compose + Media3/ExoPlayer Android app: automatic detection of the playing track, fetch of time-synced lyrics, smooth line-by-line highlighting and auto-scroll, local caching, offline support, and multi-provider fallback — all without ever blocking playback.
+
+APIs
+Primary: LRCLIB — GET https://lrclib.net/api/get — see https://lrclib.net/docs
+Fallback: https://lyrics-api.boidu.dev/
+Read both docs before coding. LRCLIB requires a client-identifying header (User-Agent or Lrclib-Client/X-User-Agent per their spec) — never omit it. Duration must be passed and should match the real track duration within ~2 seconds, since LRCLIB uses it to disambiguate results.
+Architecture (Clean Architecture, strict layering)
+UI (Compose)  →  ViewModel (StateFlow)  →  LyricsRepository  →  { LocalCache, LRCLIB, Fallback API }
+UI never calls any API or DB directly — only reads StateFlow from the ViewModel and sends user intents (e.g. offset change, retry) to it.
+LyricsRepository is the single source of truth: cache lookup → LRCLIB → fallback → parsing → persistence, in that order, and is the only class that talks to Room and Retrofit/Ktor.
+Use Coroutines + Dispatchers.IO for all network/disk work; nothing touches the main thread except state emission.
+1. Song Identification
+
+On every track change (from Media3's Player.Listener.onMediaItemTransition or metadata change), collect: title, artist, album, duration (sec), media ID. Wait until metadata is actually available before requesting lyrics — don't fire on a placeholder/loading MediaItem.
+
+Normalize title/artist before searching (strip, don't mutate what's displayed to the user):
+
+Parenthetical/bracketed tags: (Remastered ...), (Remix), (Live ...), (Official Video), [HD], etc.
+feat. / ft. / featuring ... segments
+Collapse repeated whitespace, trim
+Unicode-normalize (NFKC) to fix inconsistent characters/diacritics
+2. Local Cache (check first, always)
+
+Room database, keyed by (normalizedArtist, normalizedTitle, durationSec) (round duration to nearest second, allow ±2s match same as LRCLIB).
+
+Cache hit → return immediately, no network call.
+Cache miss → proceed to network.
+Store: plainLyrics, syncedLyrics (parsed + raw), provider, fetchedAt, expiresAt, isInstrumental flag.
+Default expiry: e.g. 30 days for successful synced results; shorter (e.g. 1 day) for "not found" results so a song can be retried later without hammering the API every launch.
+3. LRCLIB Request
+
+GET /api/get?track_name=...&artist_name=...&album_name=...&duration=...
+
+Include the required client header.
+Timeout: ~8–10s.
+Handle explicitly:
+200 with syncedLyrics → use synced.
+200 with only plainLyrics → store plain, mark as "no sync available."
+200 with instrumental: true → mark instrumental, skip fallback.
+404 → not found, proceed to fallback.
+429 → back off (see retry policy below), then fallback if still failing.
+5xx / timeout / no network → proceed to fallback (or serve cache/offline state).
+4. Fallback Provider
+
+Only called if LRCLIB returns no usable result (no synced and no plain lyrics, or a hard failure). Same contract: prefer syncedLyrics, else plainLyrics, else "no lyrics found."
+
+5. LRC Parsing
+
+Parse lines like [00:13.25]Hello (also support [mm:ss.xxx] and multiple timestamps per line, e.g. [00:13.25][00:45.10]Hello).
+
+Output: immutable List<LyricLine>(timeMs: Long, text: String), sorted ascending by timeMs.
+Skip/ignore malformed lines rather than crashing the parse.
+Parse once per track, right after fetch/cache-load — never per frame or per recomposition.
+6. Playback Sync
+Poll player.currentPosition every 50–100ms (or use player.addListener + a coroutine ticker while isPlaying; pause the ticker when paused).
+Active line = last line where line.timeMs <= currentPosition + offset.
+Only recompute/recompose when the active index changes — not on every position tick. Use derivedStateOf or compare-and-skip in the StateFlow to avoid needless recomposition.
+7. Auto-Scroll & Animation
+On active-line change, LazyColumn.animateScrollToItem() (or animateScrollTo with computed offset) so the active line settles near vertical center — no hard jumps.
+Animate per-line color, alpha, fontWeight/scale between active/inactive states using Compose animateColorAsState / animateFloatAsState with a short (150–250ms) easing transition.
+8. Manual Offset
+User-adjustable offset in ±500ms (or ±100ms) steps within a reasonable range (e.g. ±5000ms).
+displayTime = lyricLine.timeMs + offset.
+Persist per-track or global offset (product decision) via DataStore.
+9. Offline & Prefetch
+Once cached, a track's lyrics render fully offline — no re-fetch until cache expiry.
+While the current track plays, prefetch the next track's lyrics in the background (respecting cache-check-first, and cancelled if the queue changes).
+10. Resilience / Production Concerns
+Retry with exponential backoff (e.g. 3 attempts: 1s → 2s → 4s) on transient failures (429, 5xx, timeout) — not on 404.
+Cancel the in-flight lyrics request immediately on track change (CoroutineScope per track, or keyed Job cancellation) so stale results can't overwrite the new track's state.
+Debounce rapid track changes (e.g. skip spam) by ~300ms before firing a new request.
+De-duplicate concurrent identical requests (in-flight request map keyed by song key).
+Lifecycle-aware collection (repeatOnLifecycle(STARTED)) in the UI layer.
+Memory cache (in-process map) in front of the Room disk cache for instant re-renders when returning to a recently-viewed track.
+11. UI States (expose as a sealed class / enum from the ViewModel)
+
+Loading("Searching lyrics…"), LoadingSynced("Fetching synced lyrics…"), LoadingCache("Loading cache…"), NotFound, Instrumental, Offline, Error(retryable: Boolean), Success(lines, isSynced). Every state must have a corresponding UI treatment; no unhandled state should crash or blank-screen.
+
+12. Testing Checklist
+No lyrics available / instrumental track
+Plain-only lyrics (no sync)
+Fully synced lyrics
+Network timeout, 404, 429, 5xx
+Fully offline (cache hit / cache miss while offline)
+Rapid track skipping (debounce + cancellation correctness)
+Very long lyrics (scroll performance)
+Duplicate/overlapping timestamps in LRC data
+Cache expiry triggering a re-fetch
+13. Code Quality Bar
+
+Deep-scan for and eliminate: duplicate logic, unused classes, leaked coroutine scopes/collectors, main-thread blocking calls, and race conditions between track-change cancellation and in-flight requests. Maintain strict Repository → ViewModel → UI separation throughout.
+
+Definition of Done
+
+Smooth synced scrolling with centered highlighting, tasteful Compose animations, working offline mode, intelligent multi-tier caching, LRCLIB→fallback provider chaining, fast perceived load (cache/memory before network), full error-state coverage, zero playback interruption, and no main-thread jank — architecture clean enough to extend with a third provider later without touching the ViewModel or UI.

@@ -1,0 +1,140 @@
+Implement a fully production-ready time-synced lyrics system for my music app.
+
+Requirements
+1. Primary Lyrics Source (YouTube)
+When a song starts playing, first try to fetch time-synced lyrics from YouTube Music.
+Match songs using:
+Song title
+Artist
+Album (if available)
+Duration (within a few seconds tolerance)
+Parse and display synchronized lyrics (LRC format or equivalent).
+Lines must automatically highlight and scroll in sync with playback.
+2. Automatic Fallback
+
+If YouTube lyrics:
+
+are unavailable,
+fail to load,
+return an error,
+timeout,
+or are not synchronized,
+
+automatically fetch lyrics from LRCLIB.
+
+Do not require any user interaction.
+
+The fallback should happen silently.
+
+3. Multiple Fallback Strategy
+
+Priority:
+
+YouTube Music synced lyrics
+LRCLIB synced lyrics
+Enhanced synced lyrics (if multiple versions exist, choose the highest quality)
+Plain unsynced lyrics
+"Lyrics unavailable"
+
+The user should always see the best lyrics available.
+
+4. Smart Matching
+
+Implement fuzzy matching to avoid failed searches caused by:
+
+featuring artists
+remix/version names
+"Official Audio"
+"(Live)"
+"(Remastered)"
+unnecessary brackets
+emojis
+capitalization
+
+Normalize song metadata before searching.
+
+5. Synchronization
+
+Implement a professional lyric engine that:
+
+updates according to playback position
+highlights the current line
+smoothly scrolls to the active lyric
+supports seeking (jumping forward/backward)
+immediately updates when the user drags the seek bar
+works after pause/resume
+6. Caching
+
+Cache downloaded lyrics locally.
+
+Use:
+
+Song ID
+ISRC (if available)
+Artist + Title hash
+
+Do not fetch the same lyrics repeatedly.
+
+Support offline playback using cached lyrics.
+
+7. Error Handling
+
+Handle:
+
+network failures
+HTTP errors
+malformed LRC files
+missing timestamps
+duplicate timestamps
+empty responses
+rate limits
+API timeouts
+
+Never crash the app.
+
+8. Background Loading
+
+Lyrics should load asynchronously.
+Music playback must never wait for lyrics.
+Display a loading indicator while fetching.
+
+9. UI Improvements
+
+Display:
+
+Loading lyrics...
+Synced Lyrics
+Lyrics from YouTube
+Lyrics from LRCLIB
+Cached Lyrics
+Lyrics unavailable
+
+Animate lyric transitions smoothly (60 FPS where possible).
+
+10. Performance
+
+Optimize for:
+
+low memory usage
+minimal API requests
+fast parsing
+smooth scrolling
+battery efficiency
+11. Deep Scan
+
+Deep scan the entire project and fix every issue preventing the lyrics system from working correctly.
+
+Check:
+
+playback position updates
+media session callbacks
+player events
+coroutine/thread handling
+lifecycle issues
+recomposition problems (Jetpack Compose)
+state management
+caching bugs
+API parsing errors
+12. Final Goal
+
+Deliver a fully working production-quality lyrics experience similar to YouTube Music, Spotify, or Apple Music, with seamless automatic fallback from YouTube to LRCLIB and reliable synchronized lyric display for every supported song. No placeholder code, TODOs, or partially implemented features. Ensure all components are tested and integrated into the existing music player.

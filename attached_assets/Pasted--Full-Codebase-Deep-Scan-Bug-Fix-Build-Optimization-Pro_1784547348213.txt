@@ -1,0 +1,81 @@
+# Full Codebase Deep-Scan, Bug Fix & Build Optimization Prompt
+
+Use this as a complete instruction set for your developer or AI coding assistant to do a full audit of the app — not just the 5 bugs already fixed, but the entire codebase, build pipeline, and performance profile. Goal: a fully stable, optimized, error-free app ready for real users.
+
+---
+
+## 0. Scope & Ground Rules
+
+- This is a **full deep-scan**, not a spot-fix. Go file by file through every screen, every service/API call, every state management slice, and the build config — do not stop at the first few bugs found.
+- For every bug found: note the file, the root cause (not just symptom), and the fix applied.
+- Do not silently suppress errors (no blanket `try/catch` that swallows exceptions without logging/handling) — every caught error must be either handled meaningfully or surfaced to the user with a proper fallback UI.
+- After fixing, re-test the exact flow the bug occurred in, not just confirm the code compiles.
+- Do not introduce new dependencies unless strictly necessary — prefer fixing root cause over adding a library as a patch.
+
+---
+
+## 1. Static & Runtime Error Scan
+
+- Run the linter (ESLint/TSLint or equivalent) across the entire codebase and fix every warning and error — do not just disable rules to silence them.
+- If using TypeScript: run `tsc --noEmit` (or equivalent) and resolve all type errors — no `any` used to bypass type checking unless justified with a comment.
+- Search the codebase for:
+  - Unhandled promise rejections (missing `.catch()` / try-catch around `await` calls, especially network and file I/O).
+  - Null/undefined access on API responses (metadata, artwork URLs, playlist arrays) — add proper null checks/optional chaining and fallback values.
+  - Memory leaks: uncanceled subscriptions, event listeners not removed on unmount, audio player instances not disposed when navigating away.
+  - Race conditions in async state updates (e.g., download completing after user has navigated away, playlist mutation while another mutation is in flight).
+- Check all API/network calls (YT Music fetch, auth, downloads) for proper error handling: timeout handling, retry logic where appropriate, and user-facing error states (not blank/frozen screens on failure).
+
+## 2. Build Error Audit
+
+- Run a full clean build for both Android and iOS (if applicable) from scratch (`rm -rf node_modules`, clear cache, reinstall, rebuild) and resolve every build-time error and warning, including:
+  - Dependency version conflicts / peer dependency warnings.
+  - Native module linking issues.
+  - Gradle/Xcode config errors (SDK versions, permissions, signing config placeholders).
+  - Any deprecated API usage that will break in future OS/SDK updates — flag and update these even if they currently still work.
+- Confirm the release/production build (not just debug) completes successfully and the app launches without crashing.
+- Fix any environment-specific issues (missing `.env` variables, hardcoded local URLs/API keys that won't work in production).
+
+## 3. Full Regression Pass on Core Features
+
+Deep-scan and verify each of these end-to-end (not just isolated screens):
+
+- **Auth flow**: login, logout, session persistence/expiry, app-launch auth gate (per previous fix — confirm it still holds under edge cases like expired token, no internet on launch, killed app mid-login).
+- **Search & browse (YT Music source)**: search results load correctly, thumbnails/metadata render, no duplicate/missing entries.
+- **Download pipeline**: download start → progress → completion → metadata persisted → reflected instantly in Downloads list and Now Playing screen (per previous fixes — confirm no regressions).
+- **Playlist management**: create, rename, delete playlist; add/remove songs (from both local and YT Music sources); confirm "already added" state is accurate everywhere.
+- **Playback**: play/pause/skip/shuffle/repeat, background playback (if supported), lock-screen/notification controls, playback resuming correctly after interruptions (calls, other audio apps).
+- **Offline mode**: app usable for downloaded content with no internet connection, with clear UI indication of offline state (not silent failures).
+
+## 4. Performance Optimization for Mobile
+
+- Profile app startup time — target under ~2 seconds cold start on a mid-range device; lazy-load non-critical screens/modules instead of loading everything on launch.
+- Audit image/artwork loading: use caching (e.g., `react-native-fast-image` or platform equivalent) so album art isn't re-fetched on every scroll/re-render.
+- Check list rendering (song lists, playlists, downloads) uses virtualization (`FlatList`/`RecyclerListView` or equivalent) — no `.map()` rendering large lists directly, which causes jank on scroll.
+- Reduce unnecessary re-renders: audit component memoization (`React.memo`, `useMemo`, `useCallback` where appropriate) especially in list items and the player bar (which re-renders frequently during playback).
+- Check bundle size: remove unused dependencies/dead code, enable Hermes (if React Native) or equivalent JS engine optimization, enable ProGuard/R8 minification for Android release builds.
+- Battery/CPU: confirm audio playback and download processes aren't running background timers/polling more often than necessary.
+- Test on a low-to-mid spec device (not just a high-end simulator) to confirm smooth scrolling, fast screen transitions, and no dropped frames during playback controls.
+
+## 5. GitHub Build Setup
+
+- Ensure the project is pushed to a GitHub repository with a clean commit history (no committed `node_modules`, `.env` secrets, or build artifacts — confirm `.gitignore` is correct).
+- Set up GitHub Actions CI workflow to:
+  - Run lint + type-check + tests on every push/PR.
+  - Run a full build (Android APK/AAB, and iOS if applicable) to catch build errors automatically before merge.
+  - Fail the workflow if lint, type-check, tests, or build fail — no green checkmark on a broken build.
+- If distributing builds: set up a release workflow that produces a signed, installable build artifact (APK/AAB for Android at minimum) attached to GitHub Releases, with clear versioning (semantic versioning tags).
+- Document build/run instructions in the README (prerequisites, install steps, how to run locally, how to build release).
+
+## 6. Final Acceptance Criteria
+
+The task is only complete when ALL of the following are true:
+
+- [ ] Zero lint errors/warnings, zero type errors across the full codebase.
+- [ ] Clean build succeeds from scratch for both debug and release, with no warnings suppressed without justification.
+- [ ] Every core flow in Section 3 tested manually end-to-end with no crashes, freezes, or blank/broken states.
+- [ ] App launches in under ~2s on a mid-range device, scrolling and transitions are smooth (no visible jank).
+- [ ] GitHub Actions CI passes on the latest commit (lint, type-check, build all green).
+- [ ] A signed release build is available/buildable via GitHub Releases or CI artifact.
+- [ ] No hardcoded secrets/local URLs in the committed code.
+
+**Deliverable:** A short changelog/report listing every bug found (with file + root cause) and the fix applied, plus confirmation that all items in Section 6 are checked off — not just "done, no errors" without evidence.
