@@ -141,4 +141,4 @@ The workflow automatically:
 
 ## 🛡️ License
 
-Distributed under the MIT License.
+Distributed under the GPL-3.0 license.
