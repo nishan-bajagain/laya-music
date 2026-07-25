@@ -274,12 +274,15 @@ object YoutubeStatsTracker {
             return null
         }
 
-        builder.addEncodedQueryParameter("cpn", cpn)
-        builder.addEncodedQueryParameter("ver", "2")
-        builder.addEncodedQueryParameter("c", "WEB_REMIX")
+        // Use setEncodedQueryParameter so we overwrite any value the tracking
+        // URL already carries (e.g. its own "c" or "cpn") rather than adding
+        // a duplicate that confuses YouTube's stats backend.
+        builder.setEncodedQueryParameter("cpn", cpn)
+        builder.setEncodedQueryParameter("ver", "2")
+        builder.setEncodedQueryParameter("c", "WEB_REMIX")
 
-        playlistId?.let { builder.addEncodedQueryParameter("list", it) }
-        referrer?.let { builder.addEncodedQueryParameter("referrer", it) }
+        playlistId?.let { builder.setEncodedQueryParameter("list", it) }
+        referrer?.let { builder.setEncodedQueryParameter("referrer", it) }
 
         return builder
     }

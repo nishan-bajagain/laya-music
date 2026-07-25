@@ -17,6 +17,14 @@ jobs:
     name: Build and Release Android APK
     runs-on: ubuntu-latest
 
+    env:
+      # ── Signing secrets (set these in GitHub → Settings → Secrets) ──────
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      # ── YTM API key (set in GitHub → Settings → Secrets) ────────────────
+      YTM_API_KEY: ${{ secrets.YTM_API_KEY }}
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -28,8 +36,20 @@ jobs:
           java-version: '21'
           cache: gradle
 
-      - name: Set up Android SDK
+      - name: Set up Android SDK (stable components)
         uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 37 (preview channel)
+        # SDK 37 (Android 17) ships on channel 3; the stable setup-android
+        # action only installs channel-0 packages, so we install it manually.
+        run: |
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            --channel=3 \
+            "platforms;android-37.0" \
+            "build-tools;37.0.0" 2>/dev/null || \
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            --channel=3 \
+            "platforms;android-37.0" 2>/dev/null || true
 
       - name: Write local.properties
         shell: bash
@@ -39,7 +59,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build Release APK
-        run: ./gradlew assembleRelease --stacktrace
+        run: ./gradlew assembleRelease --stacktrace --no-daemon
 
       - name: Stage APK
         run: |
@@ -50,6 +70,7 @@ jobs:
             exit 1
           fi
           cp "$apk_path" build-artifacts/laya-music-release.apk
+          echo "APK: $apk_path"
 
       - name: Upload APK as Artifact
         uses: actions/upload-artifact@v4

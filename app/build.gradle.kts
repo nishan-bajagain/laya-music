@@ -1,8 +1,19 @@
-import com.android.build.api.variant.BuildConfigField
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
+import java.util.Properties
 
 val appVersionName = "1.0.2"
 val appVersionCode = 10002
+
+// ── Load local.properties (not committed to git) ──────────────────────────
+val localProps = Properties().also { props ->
+    rootProject.file("local.properties").takeIf { it.exists() }
+        ?.inputStream()?.use { props.load(it) }
+}
+
+/** Reads a key from environment variable first, then local.properties fallback. */
+fun localOrEnv(propKey: String, envKey: String = propKey.replace('.', '_').uppercase()): String? =
+    System.getenv(envKey)?.takeIf { it.isNotBlank() }
+        ?: localProps.getProperty(propKey)?.takeIf { it.isNotBlank() }
 
 plugins {
     alias(libs.plugins.android.application)
@@ -22,6 +33,8 @@ android {
     }
     // buildToolsVersion intentionally omitted — AGP 9.3 uses its own default.
 
+    val ytmApiKey = localOrEnv("ytm.api.key", "YTM_API_KEY") ?: ""
+
     defaultConfig {
         applicationId = "ca.ilianokokoro.umihi.music"
         minSdk = 24
@@ -33,22 +46,22 @@ android {
         versionName = appVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // API key injected at compile-time — never hardcoded in Kotlin source.
+        buildConfigField("String", "YTM_API_KEY", "\"$ytmApiKey\"")
     }
 
     // ── Signing ───────────────────────────────────────────────────────────────
-    // The keystore is NEVER committed to source control.
-    // For local builds: place laya-release.jks next to this file and set the
-    //   three env vars below in your shell or a local ~/.gradle/gradle.properties.
-    // For CI (GitHub Actions): add KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS,
-    //   and KEY_PASSWORD as repository secrets. The workflow decodes the base64
-    //   secret back to laya-release.jks before running assembleRelease.
+    // For local builds: values are read from local.properties (gitignored).
+    // For CI (GitHub Actions): set KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
+    //   as repository secrets. The workflow passes them as env vars to Gradle.
     // If any required value is absent the release signing config is skipped
     //   (the APK will be unsigned — safe for local debug builds).
-    val ksFile       = file("laya-release.jks")
-    val ksPassword   = System.getenv("KEYSTORE_PASSWORD")?.takeIf { it.isNotBlank() }
-    val ksAlias      = System.getenv("KEY_ALIAS")?.takeIf { it.isNotBlank() }
-    val ksKeyPass    = System.getenv("KEY_PASSWORD")?.takeIf { it.isNotBlank() }
-    val canSign      = ksFile.exists() && ksPassword != null && ksAlias != null && ksKeyPass != null
+    val ksFile    = file("laya-release.jks")
+    val ksPassword = localOrEnv("keystore.password", "KEYSTORE_PASSWORD")
+    val ksAlias    = localOrEnv("key.alias", "KEY_ALIAS")
+    val ksKeyPass  = localOrEnv("key.password", "KEY_PASSWORD")
+    val canSign    = ksFile.exists() && ksPassword != null && ksAlias != null && ksKeyPass != null
 
     if (canSign) {
         signingConfigs {

@@ -23,7 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Favorite
-import androidx.compose.material.icons.outlined.OpenInNew
+import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -222,7 +222,7 @@ fun DonationScreen(onBack: () -> Unit) {
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.padding(vertical = 4.dp)
                         ) {
-                            Icon(Icons.Outlined.OpenInNew, contentDescription = null)
+                            Icon(Icons.AutoMirrored.Outlined.OpenInNew, contentDescription = null)
                             Text("Open eSewa", style = MaterialTheme.typography.labelLarge)
                         }
                     }

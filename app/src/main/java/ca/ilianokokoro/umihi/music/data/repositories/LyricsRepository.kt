@@ -176,9 +176,10 @@ class LyricsRepository(private val context: Context) {
                 return@withContext LyricsResult.Instrumental.also { memoryCache[videoId] = it }
             }
             !lrclibResult?.syncedLyrics.isNullOrBlank() -> {
+                // lrclibResult is guaranteed non-null by the isNullOrBlank() guard above
                 val entry = CachedLyrics(
                     videoId,
-                    lrclibResult!!.syncedLyrics!!,
+                    lrclibResult!!.syncedLyrics.orEmpty(),
                     lrclibResult.plainLyrics,
                     "lrclib"
                 )

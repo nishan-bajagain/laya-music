@@ -219,12 +219,13 @@ object Constants {
         const val RETRY_DELAY = 1000
         const val YOUTUBE_URL_PREFIX = "https://www.youtube.com/watch?v="
         const val ORIGIN = "https://music.youtube.com"
-        const val API_KEY = "AIzaSyC9XL3ZjWddXya6X74dJoCTL-WEYFDNX30"
+        // API key is injected at build time via BuildConfig (never hardcoded in source).
+        val API_KEY: String get() = ca.ilianokokoro.umihi.music.BuildConfig.YTM_API_KEY
         const val USER_AGENT =
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
 
         object Browse {
-            const val URL = "${ORIGIN}/youtubei/v1/browse?key=${API_KEY}&prettyPrint=false"
+            val URL get() = "${ORIGIN}/youtubei/v1/browse?key=${API_KEY}&prettyPrint=false"
             const val PLAYLIST_BROWSE_ID = "FEmusic_liked_playlists"
             const val HOME_BROWSE_ID = "FEmusic_home"
         }
@@ -234,7 +235,7 @@ object Constants {
         }
 
         object Playlist {
-            const val EDIT_URL = "${ORIGIN}/youtubei/v1/browse/edit_playlist?key=${API_KEY}&prettyPrint=false"
+            val EDIT_URL get() = "${ORIGIN}/youtubei/v1/browse/edit_playlist?key=${API_KEY}&prettyPrint=false"
         }
 
         object Client {
@@ -268,11 +269,11 @@ object Constants {
         }
 
         object Create {
-            const val URL = "${ORIGIN}/youtubei/v1/playlist/create?key=${API_KEY}&prettyPrint=false"
+            val URL get() = "${ORIGIN}/youtubei/v1/playlist/create?key=${API_KEY}&prettyPrint=false"
         }
 
         object Delete {
-            const val URL = "${ORIGIN}/youtubei/v1/playlist/delete?key=${API_KEY}&prettyPrint=false"
+            val URL get() = "${ORIGIN}/youtubei/v1/playlist/delete?key=${API_KEY}&prettyPrint=false"
         }
 
         object PlayerInfo {
@@ -292,7 +293,7 @@ object Constants {
         }
 
         object Account {
-            const val MENU_URL = "${ORIGIN}/youtubei/v1/account/account_menu?key=${API_KEY}&prettyPrint=false"
+            val MENU_URL get() = "${ORIGIN}/youtubei/v1/account/account_menu?key=${API_KEY}&prettyPrint=false"
         }
 
         object Search {

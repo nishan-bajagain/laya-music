@@ -130,7 +130,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                         _uiState.update { currentState ->
                             currentState.copy(
                                 screenState = ScreenState.Error(
-                                    apiResult.exception ?: Exception("Unknown error loading playlists")
+                                    apiResult.exception
                                 )
                             )
                         }
