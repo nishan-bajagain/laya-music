@@ -1,0 +1,60 @@
+**Deep Scan & Fix Download/Offline Playlist Bugs**
+
+Perform a complete deep scan of the entire codebase and fix all issues related to the **Downloads**, **Offline Playlist**, and **Login** functionality.
+
+### Issues to Fix
+
+1. **Login Button Missing**
+
+   * The Login option is not appearing because of a bug related to the Downloads/Offline Playlist section.
+   * Find the root cause and fix it.
+   * Ensure the Login button is always visible when the user is not authenticated.
+   * After login, correctly display the user's profile information and account status.
+
+2. **Downloaded Songs Still Show "Download" Button**
+
+   * After a song has been successfully downloaded, the UI still displays the Download button.
+   * Fix the download state management.
+   * Detect whether the song already exists in local storage.
+   * Replace the Download button with a **check mark (✓)** or **Downloaded** indicator.
+   * The downloaded state must persist after restarting the app.
+
+3. **Offline Playlist**
+
+   * Deep scan the Offline Playlist implementation.
+   * Ensure downloaded songs are automatically added to the Offline Playlist.
+   * Remove duplicate entries.
+   * Refresh the playlist immediately after a download completes.
+   * Ensure all downloaded songs can be played without an internet connection.
+
+4. **Download Manager**
+
+   * Verify downloads complete successfully.
+   * Prevent duplicate downloads of the same song.
+   * Correctly update download progress and completion status.
+   * Handle failed downloads gracefully with retry support.
+   * Ensure downloaded file paths remain valid and accessible.
+
+5. **UI Improvements**
+
+   * Update the download icon dynamically:
+
+     * Not downloaded → Download icon.
+     * Downloading → Progress indicator.
+     * Download completed → Check mark (✓).
+   * Refresh the UI instantly after any download state changes.
+   * Ensure there are no visual glitches or stale UI states.
+
+6. **State Management**
+
+   * Fix any state management issues causing inconsistent download or login states.
+   * Ensure the UI stays synchronized with the local database/storage.
+   * Validate the downloaded status every time the app starts.
+
+### Final Requirements
+
+* Deep scan the entire project.
+* Fix the root causes instead of applying temporary workarounds.
+* Remove related bugs and edge cases.
+* Optimize performance and memory usage.
+* Ensure all changes are production-ready, stable, and fully tested.

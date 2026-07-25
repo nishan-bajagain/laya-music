@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "J1kQaguFbIi4fUDJusJm8"
+uri = "file://app/build/outputs/apk/release/laya.apk"
+type = "unspecified"
+title = "Laya Music – Synced Lyrics Fix"

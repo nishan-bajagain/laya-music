@@ -1,0 +1,2 @@
+- [Android SDK Build Setup](android-sdk-build.md) — SDK 37 requires channel=3; JAVA_HOME and SDK paths must be set explicitly for each shell session.
+- [Lyrics Architecture](lyrics-architecture.md) — full synced lyrics implementation with provider chain, cache layers, debounce, prefetch, offset, and all UI states.
