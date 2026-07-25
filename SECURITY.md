@@ -6,7 +6,7 @@ Please test any reported vulnerability on one of these two versions before submi
 
 ## Reporting a Vulnerability
 If you discover a security vulnerability, please send your report to:  
-<iliano101v3@gmail.com>
+<info@nishanbajagain.com.np>
 
 I will respond as soon as possible after receiving your message.
 
