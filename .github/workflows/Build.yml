@@ -1,0 +1,85 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build and Release Android APK
+    runs-on: ubuntu-latest
+
+    env:
+      # ── Signing secrets (set these in GitHub → Settings → Secrets) ──────
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      # ── YTM API key (set in GitHub → Settings → Secrets) ────────────────
+      YTM_API_KEY: ${{ secrets.YTM_API_KEY }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: '21'
+          cache: gradle
+
+      - name: Set up Android SDK (stable components)
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 37 (preview channel)
+        # SDK 37 (Android 17) ships on channel 3; the stable setup-android
+        # action only installs channel-0 packages, so we install it manually.
+        run: |
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            --channel=3 \
+            "platforms;android-37.0" \
+            "build-tools;37.0.0" 2>/dev/null || \
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            --channel=3 \
+            "platforms;android-37.0" 2>/dev/null || true
+
+      - name: Write local.properties
+        shell: bash
+        run: echo "sdk.dir=${ANDROID_SDK_ROOT}" > local.properties
+
+      - name: Grant Execute Permission
+        run: chmod +x gradlew
+
+      - name: Build Release APK
+        run: ./gradlew assembleRelease --stacktrace --no-daemon
+
+      - name: Stage APK
+        run: |
+          mkdir -p build-artifacts
+          apk_path=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          if [ -z "$apk_path" ]; then
+            echo "No APK found in app/build/outputs/apk/release"
+            exit 1
+          fi
+          cp "$apk_path" build-artifacts/laya-music-release.apk
+          echo "APK: $apk_path"
+
+      - name: Upload APK as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: laya-music-release-apk
+          path: build-artifacts/laya-music-release.apk
+
+      - name: Create GitHub Release and Upload APK
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build-artifacts/laya-music-release.apk

@@ -1,0 +1,42 @@
+# ─── Gradle ────────────────────────────────────────────────────────────────
+.gradle/
+build/
+**/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# ─── Local configuration (NEVER commit) ────────────────────────────────────
+local.properties
+*.jks
+*.keystore
+.env
+.env.local
+.env.*.local
+
+# ─── Android Studio / IntelliJ IDEA ────────────────────────────────────────
+*.iml
+.idea/
+*.ipr
+*.iws
+captures/
+.externalNativeBuild/
+.cxx/
+
+# ─── OS / editor cruft ─────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# ─── Generated / output ────────────────────────────────────────────────────
+out/
+gen/
+release/
+
+# ─── Kotlin / Java ─────────────────────────────────────────────────────────
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+
+# ─── Logs & temp ───────────────────────────────────────────────────────────
+*.log
+tmp/
