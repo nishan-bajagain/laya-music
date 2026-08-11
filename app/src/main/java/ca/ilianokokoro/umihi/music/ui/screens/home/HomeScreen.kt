@@ -156,7 +156,11 @@ fun HomeScreen(
                                     start = 8.dp
                                 )
                             ) {
-                                item(span = { GridItemSpan(maxLineSpan) }) {
+                                item(
+                                    key = "home_header",
+                                    span = { GridItemSpan(maxLineSpan) },
+                                    contentType = "header"
+                                ) {
                                     Row(
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
@@ -164,8 +168,16 @@ fun HomeScreen(
                                         // Profile avatar button (left)
                                         IconButton(onClick = onProfilePress) {
                                             if (isLoggedIn && accountAvatarUrl.isNotBlank()) {
+                                                val avatarRequest = remember(accountAvatarUrl) {
+                                                    ImageRequest.Builder(context)
+                                                        .data(accountAvatarUrl)
+                                                        // 36dp avatar ≈ 108px @3x — bound the
+                                                        // decode well below the raw URL size.
+                                                        .size(96, 96)
+                                                        .build()
+                                                }
                                                 AsyncImage(
-                                                    model = accountAvatarUrl,
+                                                    model = avatarRequest,
                                                     contentDescription = "Profile",
                                                     modifier = Modifier
                                                         .size(36.dp)
@@ -190,7 +202,11 @@ fun HomeScreen(
                                     }
                                 }
 
-                                item(span = { GridItemSpan(maxLineSpan) }) {
+                                item(
+                                    key = "home_recommendations",
+                                    span = { GridItemSpan(maxLineSpan) },
+                                    contentType = "recommendation_rail"
+                                ) {
                                     HomeRecommendationRail(
                                         songs = uiState.recommendations,
                                         loading = uiState.recommendationsLoading,
@@ -207,7 +223,10 @@ fun HomeScreen(
                                 }
 
                                 // Downloaded playlist — always the first card in the grid.
-                                item(key = Constants.Downloads.DOWNLOADED_PLAYLIST_ID) {
+                                item(
+                                    key = Constants.Downloads.DOWNLOADED_PLAYLIST_ID,
+                                    contentType = "playlist"
+                                ) {
                                     PlaylistCard(
                                         playlistInfo = downloadedPlaylistInfo,
                                         subtitle = stringResource(
@@ -219,7 +238,11 @@ fun HomeScreen(
                                 }
 
                                 if (playlists.isEmpty()) {
-                                    item(span = { GridItemSpan(maxLineSpan) }) {
+                                    item(
+                                        key = "home_empty_playlists",
+                                        span = { GridItemSpan(maxLineSpan) },
+                                        contentType = "empty"
+                                    ) {
                                         Text(
                                             stringResource(R.string.no_playlists),
                                             textAlign = TextAlign.Center
@@ -234,7 +257,8 @@ fun HomeScreen(
                                                 playlist.id,
                                                 index
                                             )
-                                        }
+                                        },
+                                        contentType = { _, _ -> "playlist" }
                                     ) { _, playlist ->
                                         PlaylistCard(
                                             playlistInfo = playlist,

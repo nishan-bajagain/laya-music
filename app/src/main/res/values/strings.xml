@@ -90,8 +90,6 @@
     <string name="download_clear_confirm_title">Delete all downloads?</string>
     <string name="keep_screen_on_title">Keep Screen Always On</string>
     <string name="keep_screen_on_title_description">Prevents the display from turning off while the app is open</string>
-    <string name="send_playback_data_title">Send back data to Google</string>
-    <string name="send_playback_data_description">Sends played songs back to Youtube Music for history, recommendations and year-end recap</string>
     <string name="title">Title</string>
     <string name="create">Create</string>
     <string name="create_playlist">Create playlist</string>
@@ -189,6 +187,23 @@
     <string name="github_rate_limit_retry">GitHub rate limit hit — try again later</string>
     <string name="join_discord_server">Join the Discord server</string>
     <string name="seconds">%1$d seconds</string>
+
+    <!-- App self-update (GitHub Releases flavor) -->
+    <string name="update_now">Update now</string>
+    <string name="later">Later</string>
+    <string name="skip_this_version">Skip this version</string>
+    <string name="update_ready_title">Update ready</string>
+    <string name="update_ready_body">The new version has been downloaded. Install it now?</string>
+    <string name="install">Install</string>
+    <string name="update_download_progress_notification">Downloading update… %1$d%%</string>
+    <string name="update_download_failed_notification">Update download failed</string>
+    <string name="update_download_failed">Could not download the update. Check your connection and try again.</string>
+    <string name="update_ready_notification_title">Update ready to install</string>
+    <string name="update_ready_notification_text">Version %1$s downloaded — tap to install</string>
+    <string name="update_waiting_for_wifi">Waiting for Wi-Fi to download the update</string>
+    <string name="app_update_name">App Updates</string>
+    <string name="app_update_description">Shows progress and status for app updates</string>
+    <string name="update_install_permission_needed">Allow Laya to install apps from this source, then try again</string>
 
     <!-- Lyrics -->
     <string name="lyrics">Lyrics</string>

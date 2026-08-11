@@ -1,8 +1,6 @@
 package ca.ilianokokoro.umihi.music.core.helpers
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.os.Environment
 import ca.ilianokokoro.umihi.music.core.Constants
 import ca.ilianokokoro.umihi.music.core.UmihiHttpClient
@@ -15,7 +13,6 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import okhttp3.Request
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.file.Paths
 import java.util.Locale
@@ -94,13 +91,11 @@ object UmihiHelper {
                             ?: throw IllegalStateException("Empty artwork response body")
                     }
 
-                val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                    ?: return@withContext null
-
-                ByteArrayOutputStream().use { stream ->
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream)
-                    stream.toByteArray().cappedTo()
-                }
+                // Single bounded decode: [cappedTo] samples the image down
+                // before decoding and re-encodes it once, so large thumbnails
+                // (e.g. ~1920×1080 maxresdefault) are never decoded at full
+                // resolution and no intermediate full-size bitmap is kept alive.
+                bytes.cappedTo()
             } catch (e: Exception) {
                 LogHelper.printe("Failed to fetch artwork: ${e.message}", exception = e)
                 null

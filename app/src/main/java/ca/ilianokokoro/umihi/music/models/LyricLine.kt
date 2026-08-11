@@ -1,5 +1,6 @@
 package ca.ilianokokoro.umihi.music.models
 
+import androidx.compose.runtime.Immutable
 import kotlinx.serialization.Serializable
 
 /**
@@ -8,6 +9,7 @@ import kotlinx.serialization.Serializable
  * @param text The lyric text for this line.
  */
 @Serializable
+@Immutable
 data class LyricLine(
     val timeMs: Long?,
     val text: String,
@@ -24,6 +26,7 @@ data class LyricLine(
  * timestamp. The UI can still highlight the word until the next word or line.
  */
 @Serializable
+@Immutable
 data class LyricWord(
     val text: String,
     val startMs: Long,

@@ -2,6 +2,7 @@ package ca.ilianokokoro.umihi.music.data.repositories
 
 import android.content.Context
 import ca.ilianokokoro.umihi.music.core.Constants
+import ca.ilianokokoro.umihi.music.core.LruCache
 import ca.ilianokokoro.umihi.music.core.helpers.LogHelper
 import ca.ilianokokoro.umihi.music.data.database.AppDatabase
 import ca.ilianokokoro.umihi.music.data.datasources.LrcLibDataSource
@@ -15,7 +16,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
 import java.text.Normalizer
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Single orchestration point for the lyrics contract:
@@ -39,7 +39,12 @@ class LyricsRepository(private val context: Context) {
     }
 
     companion object {
-        private val memoryCache = ConcurrentHashMap<String, LyricsOutcome>()
+        // Bounded LRU cache: entries accumulate from playback, background
+        // download workers, etc., so cap it instead of growing for the life
+        // of the process. Eviction is least-recently-used.
+        private val memoryCache = LruCache<String, LyricsOutcome>(
+            maxEntries = Constants.Lyrics.MEMORY_CACHE_MAX_ENTRIES
+        )
 
         fun evictFromMemory(videoId: String) {
             memoryCache.remove(videoId)

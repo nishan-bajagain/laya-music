@@ -58,7 +58,6 @@ object Constants {
         const val USE_SPECIAL_LANGUAGE = "use-special-language"
         const val USE_AUDIO_OFFLOAD = "use-audio-offload"
         const val KEEP_SCREEN_ON = "keep-screen-on"
-        const val SEND_PLAYBACK_DATA = "send-playback-data"
         const val DOWNLOAD_ON_METERED = "download-on-metered"
         const val DOWNLOAD_PATH = "download-path"
         const val WELCOME_SHOWN = "welcome-shown"
@@ -68,6 +67,14 @@ object Constants {
         // Last playback state — saved on task removal so the user can resume later
         const val LAST_SONG_ID = "last-song-id"
         const val LAST_POSITION_MS = "last-position-ms"
+        // App auto-update
+        const val AUTO_CHECK_UPDATES = "auto-check-updates"
+        const val DISMISSED_UPDATE_VERSION = "dismissed-update-version"
+        const val LAST_UPDATE_CHECK_MS = "last-update-check-ms"
+        // Raw GitHub releases/latest response from the last successful check —
+        // reused when a later check is rate-limited or offline so the update
+        // popup still works and no error is ever surfaced.
+        const val LAST_UPDATE_RESPONSE = "last-update-response"
     }
 
     object Database {
@@ -90,6 +97,12 @@ object Constants {
         const val CACHE_TTL_MS = 7L * 24 * 60 * 60 * 1000
         const val PLAIN_CACHE_TTL_MS = 24L * 60 * 60 * 1000
         const val NEGATIVE_CACHE_TTL_MS = 30L * 60 * 1000
+
+        // Upper bound for the process-lifetime in-memory lyrics cache. Entries are
+        // added from background paths (download workers, playback) the user may
+        // never open, so the cache must stay bounded or a long session/playlist
+        // download grows without limit.
+        const val MEMORY_CACHE_MAX_ENTRIES = 60
         const val FETCH_TIMEOUT_MS = 20_000L
         const val PROVIDER_TIMEOUT_MS = 12_000L
 
@@ -203,12 +216,6 @@ object Constants {
         const val PROGRESS_UPDATE_DELAY = 250
         const val IMAGE_TRANSITION_DELAY = 200
         val SPEEDS = listOf(0.25f, 0.5f, 0.75f, 1f, 2f, 3f, 5f)
-
-        object Tracking {
-            const val WATCHTIME_INTERVAL_MS = 15_000L
-            const val WATCHTIME_ADVANCE_SEC = 20f
-            const val POSITION_TOLERANCE_SEC = 1.5f
-        }
     }
 
     object YoutubeApi {
@@ -306,5 +313,19 @@ object Constants {
             const val URL = "https://music.youtube.com/youtubei/v1/search?prettyPrint=false"
             const val FILTER = "EgWKAQIIAWoSEAMQBBAQEAUQFRAKEAkQERAO"
         }
+    }
+
+    object Update {
+        const val GITHUB_LATEST_RELEASE_URL =
+            "https://api.github.com/repos/nishan-bajagain/laya-music/releases/latest"
+        const val APK_ASSET_NAME = "laya-music-release.apk"
+        const val UPDATE_CACHE_FOLDER = "updates"
+        const val CHECK_TIMEOUT_MS = 10_000L
+        const val MIN_RECHECK_INTERVAL_MS = 20L * 60 * 60 * 1000 // 20h — don't hammer the API
+        // Manual "Check for Updates" taps still debounce this long so a burst
+        // of taps can't burn the unauthenticated GitHub rate limit.
+        const val MIN_MANUAL_RECHECK_MS = 60_000L
+        // Unique WorkManager name so "Update now" can never start two concurrent downloads.
+        const val DOWNLOAD_WORK_NAME = "app_update_download"
     }
 }

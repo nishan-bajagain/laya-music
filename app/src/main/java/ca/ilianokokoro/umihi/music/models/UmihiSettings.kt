@@ -10,10 +10,10 @@ data class UmihiSettings(
     val useSpecialLanguage: Boolean = false,
     val useAudioOffload: Boolean = false,
     val keepScreenOn: Boolean = false,
-    val sendPlaybackData: Boolean = false,
     val downloadOnMetered: Boolean = false,
     /** Absolute path to the root download directory, or null to use internal storage. */
     val downloadPath: String? = null,
-) {
-    val canTrack: Boolean get() = sendPlaybackData && !cookies.isEmpty()
-}
+    val autoCheckForUpdates: Boolean = true,
+    /** Version the user chose to skip — the update popup must not resurface for it. */
+    val dismissedUpdateVersion: String? = null,
+)

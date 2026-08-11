@@ -36,15 +36,15 @@ bash "$(dirname "$0")/setup-android.sh"
 export ANDROID_HOME="${HOME}/android-sdk"
 export ANDROID_SDK_ROOT="${ANDROID_HOME}"
 
-# ── 4. Build release APK ───────────────────────────────────────────────────
+# ── 4. Build release APK (github flavor — the GitHub Releases distribution) ──
 echo ""
 echo "==> Building release APK..."
-./gradlew assembleRelease \
+./gradlew assembleGithubRelease \
     --no-daemon \
     --stacktrace \
     -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxMetaspaceSize=512m"
 
 echo ""
 echo "✅  Release APK built successfully."
-find app/build/outputs/apk/release -name "*.apk" 2>/dev/null && \
-    echo "APK location: app/build/outputs/apk/release/"
+find app/build/outputs/apk/github/release -name "*.apk" 2>/dev/null && \
+    echo "APK location: app/build/outputs/apk/github/release/"

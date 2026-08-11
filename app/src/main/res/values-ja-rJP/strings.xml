@@ -88,8 +88,6 @@
     <string name="download_clear_confirm_title">すべてのダウンロードを削除しますか？</string>
     <string name="keep_screen_on_title">常に画面をオンにする</string>
     <string name="keep_screen_on_title_description">アプリを開いている間にディスプレイがオフになるのを防ぎます</string>
-    <string name="send_playback_data_title">Google にデータを送る</string>
-    <string name="send_playback_data_description">YouTubeに再生された曲を履歴、推奨事項、そして年末の要約のために送信する</string>
     <string name="downloading_update">Downloading Update…</string>
     <string name="title">タイトル</string>
     <string name="create">作成</string>

@@ -63,6 +63,8 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -77,6 +79,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
@@ -87,6 +90,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import ca.ilianokokoro.umihi.music.R
 import ca.ilianokokoro.umihi.music.core.managers.PlayerManager
 import ca.ilianokokoro.umihi.music.models.LyricLine
+import ca.ilianokokoro.umihi.music.models.LyricWord
 import ca.ilianokokoro.umihi.music.ui.screens.player.PlayerViewModel
 import ca.ilianokokoro.umihi.music.ui.screens.player.components.PlayerControls
 import ca.ilianokokoro.umihi.music.ui.screens.player.components.QueueBottomSheet
@@ -98,6 +102,7 @@ import ca.ilianokokoro.umihi.music.data.repositories.DownloadRepository
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import android.content.res.Configuration
@@ -136,6 +141,14 @@ fun LyricsScreen(
     val isDownloaded = downloadedSong != null
     val scope = rememberCoroutineScope()
     val orientation = LocalConfiguration.current.orientation
+
+    // Stable function references so the lyrics list can skip recomposition
+    // when only positionMs changes — bound references are recreated on every
+    // composition otherwise, which would defeat the derived-state isolation
+    // in SyncedLyricsContent.
+    val onUserScrolled = remember(viewModel) { viewModel::onUserScrolled }
+    val onLineTapped = remember(viewModel) { viewModel::seekToLyric }
+    val onJumpToCurrent = remember(viewModel) { viewModel::resumeAutoScroll }
 
     // The player controller and queue can become available one frame after
     // this sheet is composed. Key the load to the actual track instead of
@@ -244,16 +257,27 @@ fun LyricsScreen(
                 }
 
                 is LyricsScreenState.Synced -> {
+                    // uiState is re-emitted every 100 ms position tick, but the
+                    // list only depends on the current line index. Slice the
+                    // state into two derived States whose references are stable:
+                    // the LazyColumn subtree is never recomposed by a position
+                    // tick, and only the active lyric row reads positionMs.
+                    val currentIndexState = remember {
+                        derivedStateOf {
+                            (uiState.screenState as? LyricsScreenState.Synced)
+                                ?.currentIndex ?: -1
+                        }
+                    }
+                    val positionMsState = remember { derivedStateOf { uiState.positionMs } }
                     SyncedLyricsContent(
                         lines = state.lines,
-                        currentIndex = state.currentIndex,
-                        positionMs = uiState.positionMs,
+                        currentIndex = currentIndexState,
+                        positionMs = positionMsState,
                         autoScrollEnabled = uiState.autoScrollEnabled,
-                        onUserScrolled = viewModel::onUserScrolled,
-                        onLineTapped = viewModel::seekToLyric,
-                        onJumpToCurrent = viewModel::resumeAutoScroll,
-                        showControls = true,
-                        provider = state.provider
+                        onUserScrolled = onUserScrolled,
+                        onLineTapped = onLineTapped,
+                        onJumpToCurrent = onJumpToCurrent,
+                        showControls = true
                     )
                 }
 
@@ -355,14 +379,13 @@ private fun LoadingContent(message: String) {
 @Composable
 private fun SyncedLyricsContent(
     lines: List<LyricLine>,
-    currentIndex: Int,
-    positionMs: Long,
+    currentIndex: State<Int>,
+    positionMs: State<Long>,
     autoScrollEnabled: Boolean,
     onUserScrolled: () -> Unit,
     onLineTapped: (Int) -> Unit,
     onJumpToCurrent: () -> Unit,
-    showControls: Boolean,
-    provider: String
+    showControls: Boolean
 ) {
     val listState = rememberLazyListState()
     var programmaticScroll by remember { mutableStateOf(false) }
@@ -371,47 +394,58 @@ private fun SyncedLyricsContent(
     // viewport, including the LazyColumn's content padding. The extra pass
     // after a jump is important because the target item's measured height is
     // needed for exact centering.
-    LaunchedEffect(currentIndex, autoScrollEnabled) {
-        if (!autoScrollEnabled || currentIndex < 0 || lines.isEmpty()) return@LaunchedEffect
+    //
+    // Keyed on the State objects (stable references) rather than the index
+    // value, so index changes are consumed inside via snapshotFlow and this
+    // scope — and therefore the LazyColumn — is never recomposed on a plain
+    // position tick. collectLatest cancels any in-flight scroll animation when
+    // a new index arrives (rapid seeking/scrubbing) instead of stacking
+    // animations or letting the previous one finish first.
+    LaunchedEffect(currentIndex, autoScrollEnabled, lines) {
+        snapshotFlow { currentIndex.value to autoScrollEnabled }
+            .distinctUntilChanged()
+            .collectLatest { (idx, autoScroll) ->
+                if (!autoScroll || idx < 0 || lines.isEmpty()) return@collectLatest
 
-        programmaticScroll = true
-        try {
-            repeat(3) {
-                val layoutInfo = listState.layoutInfo
-                val viewportStart = layoutInfo.viewportStartOffset
-                val viewportEnd = layoutInfo.viewportEndOffset
-                if (viewportEnd <= viewportStart) return@repeat
+                programmaticScroll = true
+                try {
+                    repeat(3) {
+                        val layoutInfo = listState.layoutInfo
+                        val viewportStart = layoutInfo.viewportStartOffset
+                        val viewportEnd = layoutInfo.viewportEndOffset
+                        if (viewportEnd <= viewportStart) return@repeat
 
-                val viewportCenter = (viewportStart + viewportEnd) / 2f
-                val visibleItem =
-                    layoutInfo.visibleItemsInfo.firstOrNull { it.index == currentIndex }
+                        val viewportCenter = (viewportStart + viewportEnd) / 2f
+                        val visibleItem =
+                            layoutInfo.visibleItemsInfo.firstOrNull { it.index == idx }
 
-                if (visibleItem == null) {
-                    // Bring a distant line into the viewport first. The next
-                    // pass uses its real measured height to center it exactly.
-                    listState.animateScrollToItem(index = currentIndex)
-                    return@repeat
-                }
+                        if (visibleItem == null) {
+                            // Bring a distant line into the viewport first. The next
+                            // pass uses its real measured height to center it exactly.
+                            listState.animateScrollToItem(index = idx)
+                            return@repeat
+                        }
 
-                val itemCenter = visibleItem.offset + visibleItem.size / 2f
-                val delta = itemCenter - viewportCenter
-                if (kotlin.math.abs(delta) > 12f) {
-                    // A slightly damped spring feels like Spotify's gentle
-                    // follow motion instead of a list that snaps on each line.
-                    listState.animateScrollBy(
-                        delta,
-                        animationSpec = spring(
-                            dampingRatio = 0.88f,
-                            stiffness = 340f
-                        )
-                    )
-                } else {
-                    return@repeat
+                        val itemCenter = visibleItem.offset + visibleItem.size / 2f
+                        val delta = itemCenter - viewportCenter
+                        if (kotlin.math.abs(delta) > 12f) {
+                            // A slightly damped spring feels like Spotify's gentle
+                            // follow motion instead of a list that snaps on each line.
+                            listState.animateScrollBy(
+                                delta,
+                                animationSpec = spring(
+                                    dampingRatio = 0.88f,
+                                    stiffness = 340f
+                                )
+                            )
+                        } else {
+                            return@repeat
+                        }
+                    }
+                } finally {
+                    programmaticScroll = false
                 }
             }
-        } finally {
-            programmaticScroll = false
-        }
     }
 
     // Programmatic centering also reports scroll progress. Ignore it and pause
@@ -422,6 +456,13 @@ private fun SyncedLyricsContent(
             .collect { scrolling ->
                 if (scrolling && !programmaticScroll) onUserScrolled()
             }
+    }
+
+    // The "jump to current" button only depends on the auto-scroll flag and
+    // whether an active line exists — derived so the list scope does not
+    // recompose on every index change.
+    val jumpVisible by remember(currentIndex, autoScrollEnabled) {
+        derivedStateOf { !autoScrollEnabled && currentIndex.value >= 0 }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -437,92 +478,19 @@ private fun SyncedLyricsContent(
             // Include the source index so duplicate timestamps remain valid
             // stable keys instead of colliding and corrupting item state.
             itemsIndexed(lines, key = { idx, line -> idx to line.timeMs }) { index, line ->
-                val isActive = currentIndex >= 0 && index == currentIndex
-
-                // Keep inactive lines readable in both light and dark themes,
-                // while giving the active line the same strong contrast as the
-                // rest of the app's primary actions.
-                val alpha by animateFloatAsState(
-                    targetValue = if (isActive) 1f else 0.42f,
-                    animationSpec = tween(durationMillis = 250),
-                    label = "lyric_alpha_$index"
-                )
-
-                // Scale: active = slightly larger (Spotify-style), spring for smoothness
-                val scale by animateFloatAsState(
-                    targetValue = if (isActive) 1.06f else 1f,
-                    animationSpec = spring(
-                        dampingRatio = 0.7f,
-                        stiffness = 300f
-                    ),
-                    label = "lyric_scale_$index"
-                )
-
-                // Color: use the active app color scheme rather than a
-                // hard-coded Spotify palette.
-                val color by animateColorAsState(
-                    targetValue = if (isActive)
-                        MaterialTheme.colorScheme.primary
-                    else
-                        MaterialTheme.colorScheme.onSurfaceVariant,
-                    animationSpec = tween(durationMillis = 250),
-                    label = "lyric_color_$index"
-                )
-
-                Text(
-                    text = buildAnnotatedString {
-                        val words = line.words
-                        if (!isActive || words.isNullOrEmpty()) {
-                            append(line.text)
-                        } else {
-                            words.forEach { word ->
-                                val wordActive = positionMs >= word.startMs &&
-                                    (word.endMs == null || positionMs < word.endMs)
-                                withStyle(
-                                    SpanStyle(
-                                        color = if (wordActive) {
-                                            MaterialTheme.colorScheme.primary
-                                        } else {
-                                            color
-                                        }
-                                    )
-                                ) {
-                                    append(word.text)
-                                }
-                            }
-                        }
-                    },
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = if (isActive) FontWeight.Bold else FontWeight.Medium,
-                        color = color,
-                        lineHeight = MaterialTheme.typography.headlineSmall.lineHeight * 1.15f
-                    ),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .then(
-                            if (isActive) {
-                                Modifier
-                                    .background(
-                                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.42f),
-                                        RoundedCornerShape(16.dp)
-                                    )
-                                    .padding(horizontal = 14.dp)
-                            } else {
-                                Modifier
-                            }
-                        )
-                        .graphicsLayer {
-                            this.alpha = alpha
-                            scaleX = scale
-                            scaleY = scale
-                            transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 0.5f)
-                        }
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) { onLineTapped(index) }
-                        .padding(vertical = 6.dp)
+                // Per-item derived state: only rows whose active flag actually
+                // flips are invalidated when the current line changes, instead
+                // of recomposing every composed row on every index change.
+                val isActive by remember {
+                    derivedStateOf { index == currentIndex.value }
+                }
+                val onLineTap = remember { { onLineTapped(index) } }
+                LyricLineRow(
+                    text = line.text,
+                    words = line.words,
+                    isActive = isActive,
+                    positionMs = positionMs,
+                    onClick = onLineTap
                 )
             }
         }
@@ -558,7 +526,7 @@ private fun SyncedLyricsContent(
 
         // "Jump to Current Lyric" button — shown only when the user has scrolled
         // away from the active line (auto-scroll disabled).
-        if (!autoScrollEnabled && currentIndex >= 0) {
+        if (jumpVisible) {
             FilledTonalButton(
                 onClick = onJumpToCurrent,
                 modifier = Modifier
@@ -576,6 +544,129 @@ private fun SyncedLyricsContent(
         }
 
     }
+}
+
+/**
+ * One lyric row, extracted into its own composable so Compose can skip rows
+ * that did not actually change. Parameters are stable references/values:
+ * [positionMs] is a [State] that only the *active* row reads (for karaoke word
+ * timing), so the other ~10 visible rows receive no per-tick invalidation at
+ * all — a 100 ms position tick recomposes exactly one row.
+ */
+@Composable
+private fun LyricLineRow(
+    text: String,
+    words: List<LyricWord>?,
+    isActive: Boolean,
+    positionMs: State<Long>,
+    onClick: () -> Unit
+) {
+    // Keep inactive lines readable in both light and dark themes,
+    // while giving the active line the same strong contrast as the
+    // rest of the app's primary actions.
+    val alpha by animateFloatAsState(
+        targetValue = if (isActive) 1f else 0.42f,
+        animationSpec = tween(durationMillis = 250)
+    )
+
+    // Scale: active = slightly larger (Spotify-style), spring for smoothness
+    val scale by animateFloatAsState(
+        targetValue = if (isActive) 1.06f else 1f,
+        animationSpec = spring(
+            dampingRatio = 0.7f,
+            stiffness = 300f
+        )
+    )
+
+    // Color: use the active app color scheme rather than a hard-coded palette.
+    val color by animateColorAsState(
+        targetValue = if (isActive)
+            MaterialTheme.colorScheme.primary
+        else
+            MaterialTheme.colorScheme.onSurfaceVariant,
+        animationSpec = tween(durationMillis = 250)
+    )
+
+    // The karaoke string is rebuilt only when the currently-spoken word index
+    // actually changes (or an active/inactive transition is in flight) — never
+    // on every position tick. positionMs.value is read only in this branch, so
+    // inactive rows never subscribe to the 100 ms tick.
+    val renderedText = if (isActive && !words.isNullOrEmpty()) {
+        val activeWordIndex = findActiveWordIndex(words, positionMs.value)
+        val activeColor = MaterialTheme.colorScheme.primary
+        remember(words, activeWordIndex, activeColor, color) {
+            buildAnnotatedString {
+                words.forEachIndexed { wordIndex, word ->
+                    // Matches the original per-word predicate for contiguous
+                    // timed words: the word under the playhead stays lit, words
+                    // with no end timestamp stay lit once spoken, ended words
+                    // revert to the line's base color.
+                    val wordActive = wordIndex == activeWordIndex ||
+                        (wordIndex < activeWordIndex && word.endMs == null)
+                    withStyle(
+                        SpanStyle(
+                            color = if (wordActive) activeColor else color
+                        )
+                    ) {
+                        append(word.text)
+                    }
+                }
+            }
+        }
+    } else {
+        remember(text) { AnnotatedString(text) }
+    }
+
+    Text(
+        text = renderedText,
+        style = MaterialTheme.typography.headlineSmall.copy(
+            fontWeight = if (isActive) FontWeight.Bold else FontWeight.Medium,
+            color = color,
+            lineHeight = MaterialTheme.typography.headlineSmall.lineHeight * 1.15f
+        ),
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (isActive) {
+                    Modifier
+                        .background(
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.42f),
+                            RoundedCornerShape(16.dp)
+                        )
+                        .padding(horizontal = 14.dp)
+                } else {
+                    Modifier
+                }
+            )
+            .graphicsLayer {
+                this.alpha = alpha
+                scaleX = scale
+                scaleY = scale
+                transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 0.5f)
+            }
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) { onClick() }
+            .padding(vertical = 6.dp)
+    )
+}
+
+/**
+ * Index of the last word active at [positionMs] (the word under the playhead),
+ * or -1 when the position falls between words. Linear scan is fine here — it
+ * runs once per tick on a single line of ~5-20 words; the expensive part, the
+ * AnnotatedString rebuild, is gated on this index changing.
+ */
+private fun findActiveWordIndex(words: List<LyricWord>, positionMs: Long): Int {
+    var active = -1
+    words.forEachIndexed { index, word ->
+        if (positionMs >= word.startMs && (word.endMs == null || positionMs < word.endMs)) {
+            active = index
+        }
+    }
+    return active
 }
 
 // ── Playback controls inside the lyrics screen ────────────────────────────────

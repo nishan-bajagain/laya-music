@@ -22,10 +22,10 @@ import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.FolderOpen
-import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.StayCurrentPortrait
+import androidx.compose.material.icons.outlined.SystemUpdate
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
@@ -158,13 +158,13 @@ fun SettingsScreen(
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             BooleanSettingItem(
-                                title = stringResource(R.string.send_playback_data_title),
-                                subtitle = stringResource(R.string.send_playback_data_description),
-                                leadingIcon = Icons.Outlined.History,
-                                value = screenState.settings.sendPlaybackData,
+                                title = stringResource(R.string.auto_update_title),
+                                subtitle = stringResource(R.string.check_update_setting_description),
+                                leadingIcon = Icons.Outlined.SystemUpdate,
+                                value = screenState.settings.autoCheckForUpdates,
                                 onToggle = {
                                     settingsViewModel.updateSetting(
-                                        PreferenceKeys.SEND_PLAYBACK_DATA, it
+                                        PreferenceKeys.AUTO_CHECK_UPDATES, it
                                     )
                                 }
                             )

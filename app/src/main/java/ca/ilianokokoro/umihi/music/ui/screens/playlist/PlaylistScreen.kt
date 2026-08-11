@@ -250,9 +250,11 @@ fun PlaylistScreen(
                                 modifier = modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(bottom = Constants.Ui.SCROLLABLE_BOTTOM_PADDING)
                             ) {
-                                item { Spacer(modifier = Modifier.height(paddingValues.calculateTopPadding())) }
+                                item(key = "playlist_header_spacer", contentType = "spacer") {
+                                    Spacer(modifier = Modifier.height(paddingValues.calculateTopPadding()))
+                                }
 
-                                item {
+                                item(key = "playlist_header", contentType = "header") {
                                     PlaylistHeader(
                                         onOpenPlayer = onOpenPlayer,
                                         isDownloading = uiState.isDownloading,
@@ -282,7 +284,7 @@ fun PlaylistScreen(
                                 }
 
                                 if (uiState.searchQuery.isNotBlank() && filteredSongs.isEmpty()) {
-                                    item {
+                                    item(key = "playlist_no_results", contentType = "empty") {
                                         Text(
                                             text = stringResource(R.string.no_results),
                                             textAlign = TextAlign.Center,
@@ -295,7 +297,8 @@ fun PlaylistScreen(
 
                                 items(
                                     items = filteredSongs,
-                                    key = { song -> song.uid }
+                                    key = { song -> song.uid },
+                                    contentType = { _ -> "song" }
                                 ) { song ->
                                     val inPlaylist = song.youtubeId in memberIds
                                     SongListItem(

@@ -4,9 +4,34 @@ import android.app.Application
 import ca.ilianokokoro.umihi.music.core.YoutubeExtractor
 import ca.ilianokokoro.umihi.music.core.helpers.LogHelper
 import ca.ilianokokoro.umihi.music.core.managers.NotificationManager
+import coil3.ImageLoader
+import coil3.PlatformContext
+import coil3.SingletonImageLoader
+import coil3.disk.DiskCache
+import coil3.memory.MemoryCache
 import org.schabi.newpipe.extractor.NewPipe
 
-class MusicApplication : Application() {
+class MusicApplication : Application(), SingletonImageLoader.Factory {
+
+    /**
+     * Global Coil loader used by every AsyncImage in the app. Capping the
+     * memory cache at 20% of device RAM and the disk cache at 2% keeps
+     * scrolling lists from evicting everything else (and from blowing past
+     * the heap on low-RAM devices) while still caching art across screens.
+     */
+    override fun newImageLoader(context: PlatformContext): ImageLoader =
+        ImageLoader.Builder(context)
+            .memoryCache {
+                MemoryCache.Builder()
+                    .maxSizePercent(context, 0.20)
+                    .build()
+            }
+            .diskCache {
+                DiskCache.Builder()
+                    .maxSizePercent(0.02)
+                    .build()
+            }
+            .build()
 
     override fun onCreate() {
         super.onCreate()

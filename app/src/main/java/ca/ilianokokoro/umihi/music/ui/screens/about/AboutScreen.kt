@@ -1,5 +1,6 @@
 package ca.ilianokokoro.umihi.music.ui.screens.about
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,6 +19,7 @@ import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.SystemUpdate
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -41,7 +43,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import ca.ilianokokoro.umihi.music.BuildConfig
 import ca.ilianokokoro.umihi.music.R
+import ca.ilianokokoro.umihi.music.core.managers.UpdateManager
 import coil3.compose.AsyncImage
 
 private const val DEVELOPER_GITHUB = "https://github.com/nishan-bajagain"
@@ -77,8 +81,8 @@ fun AboutScreen(
 
     val versionName = try {
         context.packageManager.getPackageInfo(context.packageName, 0).versionName
-            ?: "v1.0.3.1"
-    } catch (_: Exception) { "v1.0.3.1" }
+            ?: "v1.0.3"
+    } catch (_: Exception) { "v1.0.3" }
 
     Scaffold(
         topBar = {
@@ -302,6 +306,34 @@ fun AboutScreen(
                     ) {
                         Icon(Icons.Outlined.Code, contentDescription = null)
                         Text(stringResource(R.string.view_on_github))
+                    }
+                }
+                if (BuildConfig.SELF_UPDATE_ENABLED) {
+                    FilledTonalButton(
+                        onClick = {
+                            // Manual check — ignores the recheck-interval throttle.
+                            // The popup itself appears if an update is available.
+                            // Rate limits and network failures degrade silently to
+                            // the last known result — never show an error toast.
+                            UpdateManager.checkForUpdate(context, force = true) { result ->
+                                if (result == UpdateManager.UpdateCheckResult.UP_TO_DATE) {
+                                    Toast.makeText(
+                                        context,
+                                        R.string.up_to_date_message,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Outlined.SystemUpdate, contentDescription = null)
+                            Text(stringResource(R.string.check_for_updates))
+                        }
                     }
                 }
             }

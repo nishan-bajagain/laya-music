@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -125,11 +126,19 @@ fun ProfileScreen(
                     tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                 )
                 if (accountAvatarUrl.isNotBlank() && !avatarFailed) {
+                    val avatarRequest = remember(accountAvatarUrl, avatarRetry) {
+                        ImageRequest.Builder(context)
+                            // The fragment changes Coil's cache key but is not sent
+                            // to the avatar server, so a failed first request can
+                            // be retried without disabling normal image caching.
+                            .data("$accountAvatarUrl#avatarRetry=$avatarRetry")
+                            // 120dp avatar ≈ 360px @3x — bound the decode instead
+                            // of loading the raw URL at full resolution.
+                            .size(256, 256)
+                            .build()
+                    }
                     AsyncImage(
-                        // The fragment changes Coil's cache key but is not sent
-                        // to the avatar server, so a failed first request can
-                        // be retried without disabling normal image caching.
-                        model = "$accountAvatarUrl#avatarRetry=$avatarRetry",
+                        model = avatarRequest,
                         contentDescription = "Profile picture",
                         modifier = Modifier
                             .size(120.dp)

@@ -11,6 +11,7 @@ import ca.ilianokokoro.umihi.music.core.helpers.LogHelper.printe
 import ca.ilianokokoro.umihi.music.models.Playlist
 import ca.ilianokokoro.umihi.music.models.Song
 import kotlin.math.abs
+import java.io.File
 import android.app.NotificationManager as AndroidNotificationManager
 
 object NotificationManager {
@@ -231,6 +232,87 @@ object NotificationManager {
         androidNotificationManager.notify(getNotificationID(song.youtubeId), notification)
     }
 
+    fun showUpdateWaitingForWifi(context: Context) {
+        val notification = getBaseNotification(context, NotificationChannels.APP_UPDATE)
+            .setContentTitle(context.getString(R.string.update_available))
+            .setContentText(context.getString(R.string.update_waiting_for_wifi))
+            .setSmallIcon(android.R.drawable.stat_sys_download)
+            .setOngoing(true)
+            .setCategory(NotificationCompat.CATEGORY_PROGRESS)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
+
+        androidNotificationManager.notify(getNotificationID("app_update"), notification)
+    }
+
+    fun showUpdateDownloadProgress(
+        context: Context,
+        progress: Long,
+        total: Long
+    ) {
+        val percent = if (total > 0) ((progress * 100) / total).toInt() else 0
+        val notification = getBaseNotification(context, NotificationChannels.APP_UPDATE)
+            .setContentTitle(context.getString(R.string.downloading_update))
+            .setContentText(
+                context.getString(
+                    R.string.update_download_progress_notification,
+                    percent
+                )
+            )
+            .setSmallIcon(android.R.drawable.stat_sys_download)
+            .setProgress(100, percent, total <= 0)
+            .setOngoing(true)
+            .setCategory(NotificationCompat.CATEGORY_PROGRESS)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
+
+        androidNotificationManager.notify(getNotificationID("app_update"), notification)
+    }
+
+    fun showUpdateReadyToInstall(
+        context: Context,
+        apkFile: File,
+        version: String
+    ) {
+        // Tap the notification to jump straight into the install screen.
+        val installPendingIntent = PendingIntent.getActivity(
+            context,
+            UPDATE_INSTALL_REQUEST_CODE,
+            UpdateManager.buildInstallIntent(context, apkFile),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val notification = getBaseNotification(context, NotificationChannels.APP_UPDATE)
+            .setContentTitle(context.getString(R.string.update_ready_notification_title))
+            .setContentText(
+                context.getString(
+                    R.string.update_ready_notification_text,
+                    version
+                )
+            )
+            .setSmallIcon(android.R.drawable.stat_sys_download_done)
+            .setContentIntent(installPendingIntent)
+            .setAutoCancel(true)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .build()
+
+        androidNotificationManager.notify(getNotificationID("app_update"), notification)
+    }
+
+    fun showUpdateDownloadFailed(context: Context) {
+        val notification = getBaseNotification(context, NotificationChannels.APP_UPDATE)
+            .setContentTitle(context.getString(R.string.update_download_failed_notification))
+            .setContentText(context.getString(R.string.update_download_failed))
+            .setSmallIcon(android.R.drawable.stat_notify_error)
+            .setAutoCancel(true)
+            .setCategory(NotificationCompat.CATEGORY_ERROR)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .build()
+
+        androidNotificationManager.notify(getNotificationID("app_update"), notification)
+    }
+
     private fun getBaseNotification(
         context: Context,
         channel: NotificationChannels
@@ -269,6 +351,16 @@ object NotificationManager {
             descriptionRes = (R.string.song_alerts_description),
             importance = AndroidNotificationManager.IMPORTANCE_DEFAULT,
             group = "SONG_GROUP"
+        ),
+
+        APP_UPDATE(
+            channelId = "app_update",
+            nameRes = R.string.app_update_name,
+            descriptionRes = R.string.app_update_description,
+            importance = AndroidNotificationManager.IMPORTANCE_DEFAULT,
+            group = "APP_UPDATE_GROUP"
         );
     }
+
+    private const val UPDATE_INSTALL_REQUEST_CODE = 42
 }

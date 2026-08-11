@@ -247,7 +247,7 @@ fun SearchScreen(
                         LazyColumn(
                             contentPadding = PaddingValues(bottom = Constants.Ui.SCROLLABLE_BOTTOM_PADDING)
                         ) {
-                            item {
+                            item(key = "recommendations_title", contentType = "title") {
                                 Text(
                                     text = stringResource(R.string.recommendations_title),
                                     style = MaterialTheme.typography.titleMedium,
@@ -259,7 +259,8 @@ fun SearchScreen(
                             val recommendations = uiState.recommendations
                             items(
                                 items = recommendations,
-                                key = { it.uid }
+                                key = { it.uid },
+                                contentType = { _ -> "song" }
                             ) { song ->
                                 val inPlaylist = song.youtubeId in memberIds
                                 SongListItem(

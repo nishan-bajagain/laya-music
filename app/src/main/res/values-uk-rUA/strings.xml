@@ -88,8 +88,6 @@
     <string name="download_clear_confirm_title">Видалити всі завантаження?</string>
     <string name="keep_screen_on_title">Тримати екран Always On</string>
     <string name="keep_screen_on_title_description">Запобігає вимкненню екрану, коли програма відкрита</string>
-    <string name="send_playback_data_title">Відправити назад Google</string>
-    <string name="send_playback_data_description">Надсилає пісні повернутися до музики Youtube для історії, рекомендацій та відповідей на кінець року</string>
     <string name="downloading_update">Завантаження оновлення…</string>
     <string name="title">Найменування</string>
     <string name="create">Створити</string>

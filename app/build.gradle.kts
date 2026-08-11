@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import java.util.Properties
 
-val appVersionName = "v1.0.3.1"
+val appVersionName = "v1.0.3"
 val appVersionCode = 10011
 
 // ── Load local.properties (not committed to git) ──────────────────────────
@@ -99,6 +99,23 @@ android {
         }
     }
 
+    // Distribution flavors: `github` is the default distribution (GitHub
+    // Releases self-update enabled); `store` is the Play Store variant where
+    // self-updating is against store policy — the store manifest removes
+    // REQUEST_INSTALL_PACKAGES and SELF_UPDATE_ENABLED is false, so none of
+    // the update machinery runs.
+    flavorDimensions += "distribution"
+    productFlavors {
+        create("github") {
+            dimension = "distribution"
+            buildConfigField("boolean", "SELF_UPDATE_ENABLED", "true")
+        }
+        create("store") {
+            dimension = "distribution"
+            buildConfigField("boolean", "SELF_UPDATE_ENABLED", "false")
+        }
+    }
+
     // Universal APK only
     splits {
         abi {
@@ -130,9 +147,17 @@ android {
 androidComponents {
     onVariants { variant ->
         variant.outputs.forEach { output ->
-            output.outputFileName.set("laya.apk")
+            // Keep per-flavor APKs apart while preserving the single shared name.
+            output.outputFileName.set("laya-${variant.name}.apk")
         }
     }
+}
+
+// Adding product flavors renames the per-variant unit-test tasks to
+// testGithubDebugUnitTest / testStoreDebugUnitTest. Re-expose the old
+// aggregate name so the documented `testDebugUnitTest` command keeps working.
+tasks.register("testDebugUnitTest") {
+    dependsOn("testGithubDebugUnitTest", "testStoreDebugUnitTest")
 }
 
 ksp {

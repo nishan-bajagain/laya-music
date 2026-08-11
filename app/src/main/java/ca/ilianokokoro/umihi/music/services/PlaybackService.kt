@@ -44,7 +44,6 @@ import ca.ilianokokoro.umihi.music.core.helpers.LogHelper
 import ca.ilianokokoro.umihi.music.core.helpers.LogHelper.printe
 import ca.ilianokokoro.umihi.music.core.helpers.UmihiHelper
 import ca.ilianokokoro.umihi.music.core.managers.PlayerManager
-import ca.ilianokokoro.umihi.music.core.youtube.YoutubeStatsTracker
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository
 import ca.ilianokokoro.umihi.music.data.repositories.PlaylistRepository
 import ca.ilianokokoro.umihi.music.data.repositories.SongRepository
@@ -196,39 +195,6 @@ class PlaybackService : MediaLibraryService() {
             ) {
                 PlayerManager.updatePlaybackInfo(PlaybackAudioInfo())
                 updateCurrentMediaItemThumbnail(mediaItem)
-                val songId = mediaItem?.mediaId ?: return
-                serviceScope.launch {
-                    val settings = datastoreRepository.getSettings()
-                    YoutubeStatsTracker.onPlaybackStarted(songId, settings)
-                }
-            }
-
-            override fun onPlaybackStateChanged(playbackState: Int) {
-                if (playbackState == Player.STATE_IDLE) {
-                    YoutubeStatsTracker.stopPlaybackTracking()
-                }
-            }
-
-            override fun onIsPlayingChanged(isPlaying: Boolean) {
-                if (isPlaying) {
-                    YoutubeStatsTracker.onPlaybackResumed()
-                } else {
-                    YoutubeStatsTracker.onPlaybackPaused()
-                }
-            }
-
-            override fun onPositionDiscontinuity(
-                oldPosition: Player.PositionInfo,
-                newPosition: Player.PositionInfo,
-                reason: Int
-            ) {
-                // A seek (or auto-transition) changed the playback position —
-                // reset the watchtime tracker so the next update reflects the new position.
-                if (reason == Player.DISCONTINUITY_REASON_SEEK ||
-                    reason == Player.DISCONTINUITY_REASON_SEEK_ADJUSTMENT
-                ) {
-                    YoutubeStatsTracker.onSeekPerformed()
-                }
             }
 
             override fun onPlayerError(error: PlaybackException) {
@@ -373,9 +339,6 @@ class PlaybackService : MediaLibraryService() {
         }
 
         // 2. Stop playback so audio does not continue after the swipe.
-        runBlocking(Dispatchers.IO) {
-            YoutubeStatsTracker.stopPlaybackTrackingAndFlush()
-        }
         currentPlayer.stop()
 
         // 3. Dismiss the media notification immediately.
@@ -424,12 +387,6 @@ class PlaybackService : MediaLibraryService() {
     }
 
     override fun onDestroy() {
-        // Flush before releasing the player. Once ExoPlayer is released the
-        // tracker can no longer read the final position for this session.
-        runBlocking(Dispatchers.IO) {
-            YoutubeStatsTracker.stopPlaybackTrackingAndFlush()
-        }
-
         // Cancel all service-owned coroutines first so no background work (thumbnail
         // fetching, settings reads, etc.) races against resource teardown below.
         serviceScope.cancel()

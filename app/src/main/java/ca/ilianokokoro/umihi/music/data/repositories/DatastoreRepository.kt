@@ -16,10 +16,13 @@ import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository.Prefere
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository.PreferenceKeys.DOWNLOAD_ON_METERED
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository.PreferenceKeys.DOWNLOAD_PATH
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository.PreferenceKeys.KEEP_SCREEN_ON
-import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository.PreferenceKeys.SEND_PLAYBACK_DATA
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository.PreferenceKeys.SHOW_PODCAST_PLAYLIST
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository.PreferenceKeys.USE_AUDIO_OFFLOAD
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository.PreferenceKeys.USE_SPECIAL_LANGUAGE
+import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository.PreferenceKeys.AUTO_CHECK_UPDATES
+import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository.PreferenceKeys.DISMISSED_UPDATE_VERSION
+import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository.PreferenceKeys.LAST_UPDATE_CHECK_MS
+import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository.PreferenceKeys.LAST_UPDATE_RESPONSE
 import ca.ilianokokoro.umihi.music.models.Cookies
 import ca.ilianokokoro.umihi.music.models.UmihiSettings
 import kotlinx.coroutines.flow.Flow
@@ -38,7 +41,6 @@ class DatastoreRepository(private val context: Context) {
         val USE_SPECIAL_LANGUAGE = booleanPreferencesKey(Constants.Datastore.USE_SPECIAL_LANGUAGE)
         val USE_AUDIO_OFFLOAD = booleanPreferencesKey(Constants.Datastore.USE_AUDIO_OFFLOAD)
         val KEEP_SCREEN_ON = booleanPreferencesKey(Constants.Datastore.KEEP_SCREEN_ON)
-        val SEND_PLAYBACK_DATA = booleanPreferencesKey(Constants.Datastore.SEND_PLAYBACK_DATA)
         val DOWNLOAD_ON_METERED = booleanPreferencesKey(Constants.Datastore.DOWNLOAD_ON_METERED)
         val DOWNLOAD_PATH = stringPreferencesKey(Constants.Datastore.DOWNLOAD_PATH)
         val WELCOME_SHOWN = booleanPreferencesKey(Constants.Datastore.WELCOME_SHOWN)
@@ -47,6 +49,11 @@ class DatastoreRepository(private val context: Context) {
         val ACCOUNT_AVATAR_URL = stringPreferencesKey(Constants.Datastore.ACCOUNT_AVATAR_URL)
         val LAST_SONG_ID = stringPreferencesKey(Constants.Datastore.LAST_SONG_ID)
         val LAST_POSITION_MS = longPreferencesKey(Constants.Datastore.LAST_POSITION_MS)
+        val AUTO_CHECK_UPDATES = booleanPreferencesKey(Constants.Datastore.AUTO_CHECK_UPDATES)
+        val DISMISSED_UPDATE_VERSION =
+            stringPreferencesKey(Constants.Datastore.DISMISSED_UPDATE_VERSION)
+        val LAST_UPDATE_CHECK_MS = longPreferencesKey(Constants.Datastore.LAST_UPDATE_CHECK_MS)
+        val LAST_UPDATE_RESPONSE = stringPreferencesKey(Constants.Datastore.LAST_UPDATE_RESPONSE)
     }
 
     suspend fun <T> save(key: Preferences.Key<T>, value: T) {
@@ -60,9 +67,10 @@ class DatastoreRepository(private val context: Context) {
         val useSpecialLanguage = it[USE_SPECIAL_LANGUAGE] ?: false
         val useAudioOffload = it[USE_AUDIO_OFFLOAD] ?: false
         val keepScreenOn = it[KEEP_SCREEN_ON] ?: false
-        val sendPlaybackData = it[SEND_PLAYBACK_DATA] ?: false
         val downloadOnMetered = it[DOWNLOAD_ON_METERED] ?: false
         val downloadPath = it[DOWNLOAD_PATH]
+        val autoCheckForUpdates = it[AUTO_CHECK_UPDATES] ?: true
+        val dismissedUpdateVersion = it[DISMISSED_UPDATE_VERSION]
         val cookies = cookies.first()
         val dataSyncId = dataSyncId.first()
 
@@ -73,9 +81,10 @@ class DatastoreRepository(private val context: Context) {
             useSpecialLanguage = useSpecialLanguage,
             useAudioOffload = useAudioOffload,
             keepScreenOn = keepScreenOn,
-            sendPlaybackData = sendPlaybackData,
             downloadOnMetered = downloadOnMetered,
-            downloadPath = downloadPath
+            downloadPath = downloadPath,
+            autoCheckForUpdates = autoCheckForUpdates,
+            dismissedUpdateVersion = dismissedUpdateVersion
         )
     }
 
@@ -183,6 +192,51 @@ class DatastoreRepository(private val context: Context) {
     suspend fun getLastPlaybackState(): Pair<String?, Long> {
         val prefs = context.dataStore.data.first()
         return prefs[PreferenceKeys.LAST_SONG_ID] to (prefs[PreferenceKeys.LAST_POSITION_MS] ?: 0L)
+    }
+
+    // ── App auto-update state ──────────────────────────────────────────────────
+
+    /** Timestamp (ms since epoch) of the last successful update check, or 0 if never checked. */
+    suspend fun getLastUpdateCheckMs(): Long {
+        return context.dataStore.data.first()[PreferenceKeys.LAST_UPDATE_CHECK_MS] ?: 0L
+    }
+
+    suspend fun saveLastUpdateCheckMs(ms: Long) {
+        context.dataStore.edit { it[PreferenceKeys.LAST_UPDATE_CHECK_MS] = ms }
+    }
+
+    /**
+     * Remembers a version the user chose to skip. A blank/null value clears it
+     * so the popup can resurface for that version again.
+     */
+    suspend fun saveDismissedUpdateVersion(version: String?) {
+        context.dataStore.edit { prefs ->
+            if (version.isNullOrBlank()) {
+                prefs.remove(PreferenceKeys.DISMISSED_UPDATE_VERSION)
+            } else {
+                prefs[PreferenceKeys.DISMISSED_UPDATE_VERSION] = version
+            }
+        }
+    }
+
+    /**
+     * The raw GitHub `/releases/latest` response from the last successful
+     * check, or null if the check has never succeeded. Used as an offline /
+     * rate-limited fallback so the update popup keeps working and the manual
+     * check never surfaces an error.
+     */
+    suspend fun getLastUpdateResponse(): String? {
+        return context.dataStore.data.first()[PreferenceKeys.LAST_UPDATE_RESPONSE]
+    }
+
+    suspend fun saveLastUpdateResponse(body: String?) {
+        context.dataStore.edit { prefs ->
+            if (body.isNullOrBlank()) {
+                prefs.remove(PreferenceKeys.LAST_UPDATE_RESPONSE)
+            } else {
+                prefs[PreferenceKeys.LAST_UPDATE_RESPONSE] = body
+            }
+        }
     }
 
     suspend fun debugPrintAllPreferences() {

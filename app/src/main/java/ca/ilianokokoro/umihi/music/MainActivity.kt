@@ -13,6 +13,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
@@ -21,6 +24,7 @@ import ca.ilianokokoro.umihi.music.core.Constants
 import ca.ilianokokoro.umihi.music.core.managers.PlayerManager
 import ca.ilianokokoro.umihi.music.core.managers.PlaylistMembership
 import ca.ilianokokoro.umihi.music.core.managers.ScreenAwakeManager
+import ca.ilianokokoro.umihi.music.core.managers.UpdateManager
 import ca.ilianokokoro.umihi.music.core.youtube.YoutubeDataExtractor
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository
 import ca.ilianokokoro.umihi.music.data.repositories.SongRepository
@@ -37,25 +41,42 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.RequestPermission()
     ) {}
 
+    // Startup data is read asynchronously in onCreate while the splash screen
+    // stays visible, so the first drawn frame always has correct values without
+    // blocking the main thread with runBlocking.
+    private var showWelcome by mutableStateOf(true)
+    private var isAuthenticated by mutableStateOf(false)
+    private var keepSplashOn by mutableStateOf(true)
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
+        val splashScreen = installSplashScreen()
 
         super.onCreate(savedInstanceState)
+
+        // Keep the splash up until the DataStore reads below complete, so the
+        // welcome/auth decision is never rendered from the stale defaults.
+        splashScreen.setKeepOnScreenCondition { keepSplashOn }
 
         initCaoc()
 
         val datastoreRepo = DatastoreRepository(this@MainActivity)
-        // Wrap each runBlocking read in try-catch: a corrupted DataStore file or a
-        // first-install race can throw here, crashing the app before it renders.
-        val showWelcome = try {
-            runBlocking { !datastoreRepo.hasSeenWelcome() }
-        } catch (_: Exception) {
-            true   // safe default — show welcome/onboarding
-        }
-        val isAuthenticated = try {
-            runBlocking { datastoreRepo.cookies.first().isNotEmpty() }
-        } catch (_: Exception) {
-            false  // safe default — require login
+        // Read DataStore off the main thread. Wrap each read in try-catch: a
+        // corrupted DataStore file or a first-install race can throw, so we
+        // fall back to the same safe defaults as before instead of crashing.
+        lifecycleScope.launch {
+            val welcome = try {
+                !datastoreRepo.hasSeenWelcome()
+            } catch (_: Exception) {
+                true   // safe default — show welcome/onboarding
+            }
+            val auth = try {
+                datastoreRepo.cookies.first().isNotEmpty()
+            } catch (_: Exception) {
+                false  // safe default — require login
+            }
+            showWelcome = welcome
+            isAuthenticated = auth
+            keepSplashOn = false
         }
 
         enableEdgeToEdge()
@@ -74,6 +95,12 @@ class MainActivity : ComponentActivity() {
         // Initialise the app-wide playlist membership tracker so every screen can
         // reactively observe which songs belong to at least one local playlist.
         PlaylistMembership.initialize(this, lifecycleScope)
+
+        // Fire-and-forget update check — a background nice-to-have, never
+        // startup-gating data. Gated per-flavor so the store build is inert.
+        if (BuildConfig.SELF_UPDATE_ENABLED) {
+            UpdateManager.checkForUpdate(this)
+        }
 
         handleShareIntent(intent)
         handleViewIntent(intent)
@@ -99,6 +126,11 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun attachBaseContext(newBase: Context) {
+        // This runBlocking is unavoidable: attachBaseContext runs before
+        // super.onCreate(), so no lifecycleScope or splash screen exists yet,
+        // and the special-language flag must be known synchronously to build
+        // the configuration context returned below. It is a single DataStore
+        // read and only runs on activity (re)creation, not per frame.
         val useSpecialLanguage = try {
             runBlocking { DatastoreRepository(newBase).settings.first().useSpecialLanguage }
         } catch (_: Exception) {

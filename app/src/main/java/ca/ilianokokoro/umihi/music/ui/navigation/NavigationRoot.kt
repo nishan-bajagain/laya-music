@@ -36,6 +36,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
@@ -44,9 +45,14 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import ca.ilianokokoro.umihi.music.BuildConfig
 import ca.ilianokokoro.umihi.music.R
 import ca.ilianokokoro.umihi.music.core.Constants
 import ca.ilianokokoro.umihi.music.core.helpers.LogHelper.printe
+import ca.ilianokokoro.umihi.music.core.managers.UpdateManager
+import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository
+import ca.ilianokokoro.umihi.music.ui.components.dialog.UpdateAvailableDialog
+import ca.ilianokokoro.umihi.music.ui.components.dialog.UpdateReadyDialog
 import ca.ilianokokoro.umihi.music.ui.components.miniplayer.MiniPlayerWrapper
 import ca.ilianokokoro.umihi.music.ui.navigation.viewmodels.SharedViewModel
 import ca.ilianokokoro.umihi.music.ui.screens.about.AboutScreen
@@ -76,6 +82,11 @@ fun NavigationRoot(
     val backStack = rememberNavBackStack(initialKey)
     val app = LocalContext.current.applicationContext as Application
     val scope = rememberCoroutineScope()
+
+    // App self-update state — collected at the root so the update popup can
+    // appear on any screen. Gated by BuildConfig so the store flavor is inert.
+    val updateInfo by UpdateManager.availableUpdate.collectAsStateWithLifecycle()
+    val readyApk by UpdateManager.readyToInstallApk.collectAsStateWithLifecycle()
     val currentScreen = backStack.last()
     val screenConfig = rememberScreenUiConfig(currentScreen)
 
@@ -306,6 +317,37 @@ fun NavigationRoot(
             sheetState = playerSheetState
         ) {
             PlayerScreen(onBack = { showFullPlayer = false }, application = app)
+        }
+    }
+
+    if (BuildConfig.SELF_UPDATE_ENABLED) {
+        updateInfo?.let { info ->
+            UpdateAvailableDialog(
+                version = info.version,
+                notes = info.notes,
+                onUpdateNow = {
+                    UpdateManager.startUpdateDownload(app)
+                    UpdateManager.dismissUpdatePrompt()
+                },
+                onLater = UpdateManager::dismissUpdatePrompt,
+                onSkipThisVersion = {
+                    scope.launch {
+                        DatastoreRepository(app)
+                            .saveDismissedUpdateVersion(info.version)
+                    }
+                    UpdateManager.dismissUpdatePrompt()
+                }
+            )
+        }
+
+        readyApk?.let { apk ->
+            UpdateReadyDialog(
+                onInstall = {
+                    UpdateManager.installUpdate(app, apk)
+                    UpdateManager.dismissReadyToInstall()
+                },
+                onDismiss = UpdateManager::dismissReadyToInstall
+            )
         }
     }
 
