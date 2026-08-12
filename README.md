@@ -15,12 +15,15 @@
 
 ## 📸 Screenshots
 
-<!-- NOTE: Replace 'screen1.png', 'screen2.png', etc., with your actual image file names in the 'assetss' folder -->
 <div align="center">
-  <img src="https://raw.githubusercontent.com/nishan-bajagain/laya-music/main/assetss/screen1.png" width="24%" alt="Screenshot 1">
-  <img src="https://raw.githubusercontent.com/nishan-bajagain/laya-music/main/assetss/screen2.png" width="24%" alt="Screenshot 2">
-  <img src="https://raw.githubusercontent.com/nishan-bajagain/laya-music/main/assetss/screen3.png" width="24%" alt="Screenshot 3">
-  <img src="https://raw.githubusercontent.com/nishan-bajagain/laya-music/main/assetss/screen4.png" width="24%" alt="Screenshot 4">
+  <img src="https://raw.githubusercontent.com/nishan-bajagain/laya-music/refs/heads/main/assets/welcome.jpeg" width="24%" alt="Welcome Screen">
+  <img src="https://raw.githubusercontent.com/nishan-bajagain/laya-music/refs/heads/main/assets/home.jpeg" width="24%" alt="Home Screen">
+  <img src="https://raw.githubusercontent.com/nishan-bajagain/laya-music/refs/heads/main/assets/search.jpeg" width="24%" alt="Search Screen">
+  <img src="https://raw.githubusercontent.com/nishan-bajagain/laya-music/refs/heads/main/assets/player.jpeg" width="24%" alt="Player Screen">
+  <br>
+  <img src="https://raw.githubusercontent.com/nishan-bajagain/laya-music/refs/heads/main/assets/lyrics.jpeg" width="24%" alt="Lyrics Screen">
+  <img src="https://raw.githubusercontent.com/nishan-bajagain/laya-music/refs/heads/main/assets/profile.jpeg" width="24%" alt="Profile Screen">
+  <img src="https://raw.githubusercontent.com/nishan-bajagain/laya-music/refs/heads/main/assets/settings.jpeg" width="24%" alt="Settings Screen">
 </div>
 
 ---
