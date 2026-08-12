@@ -1,186 +1,184 @@
-# Laya Music
+# 🎵 Laya Music
 
 <p align="center">
   <img src="assets/banner.jpg" alt="Laya Music" width="100%">
 </p>
 
 <p align="center">
-  A native Android client for listening to YouTube Music with a focused, lightweight interface.
+  <strong>A lightweight, modern Android music client for YouTube Music.</strong>
 </p>
 
 <p align="center">
-  <a href="https://developer.android.com/"><img src="https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white" alt="Android"></a>
-  <a href="https://kotlinlang.org/"><img src="https://img.shields.io/badge/Kotlin-2.4.0-7F52FF?logo=kotlin&logoColor=white" alt="Kotlin"></a>
-  <a href="https://developer.android.com/compose"><img src="https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?logo=jetpackcompose&logoColor=white" alt="Jetpack Compose"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPL--3.0-blue" alt="GPL-3.0"></a>
+  <a href="https://developer.android.com/">
+    <img src="https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white" alt="Android">
+  </a>
+  <a href="https://kotlinlang.org/">
+    <img src="https://img.shields.io/badge/Kotlin-2.4.0-7F52FF?logo=kotlin&logoColor=white" alt="Kotlin">
+  </a>
+  <a href="https://developer.android.com/compose">
+    <img src="https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?logo=jetpackcompose&logoColor=white" alt="Jetpack Compose">
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-GPL--3.0-blue" alt="GPL-3.0">
+  </a>
 </p>
 
-## Overview
+<p align="center">
+  <a href="#-features">Features</a> •
+  <a href="#-screenshots">Screenshots</a> •
+  <a href="#-technology">Technology</a> •
+  <a href="#-installation">Installation</a> •
+  <a href="#-contributing">Contributing</a>
+</p>
 
-Laya Music is built with Kotlin and Jetpack Compose for Android. It provides YouTube Music search, streaming playback, playlists, downloads, lyrics, Android Auto support, and a local cache for frequently used data.
+---
 
-The project is designed to keep the playback experience responsive while retaining a conventional Android architecture that is easy to build, inspect, and extend.
+## ✨ About
 
-## Features
+**Laya Music** is a native Android music player built with **Kotlin** and **Jetpack Compose**, designed to provide a clean, fast, and focused YouTube Music experience.
 
-- Search and stream tracks, albums, and playlists from YouTube Music.
-- Background playback through Media3 and a media session.
-- Local downloads and offline playback support.
-- Account sign-in with access to personal playlists, history, and recommendations.
-- Line-synchronised lyrics from LRCLIB, with plain-text lyrics as a fallback.
-- Lyrics caching in Room for faster repeat access and offline use.
-- Material 3 interface with dynamic colour support.
-- Android Auto media controls and voice search handling.
-- Playback history synchronisation.
-- Playlist creation and local playlist management.
-- Background work for downloads and update checks.
+It combines streaming, playlists, downloads, synchronized lyrics, background playback, Android Auto, and local caching into a single lightweight application.
 
-## Technology
+> 🎧 **Simple music experience. No unnecessary clutter.**
 
-| Area | Implementation |
-| --- | --- |
-| Language | Kotlin 2.4.0 |
-| UI | Jetpack Compose and Material 3 |
-| Build | Android Gradle Plugin 9.3.0 |
-| Playback | AndroidX Media3 / ExoPlayer |
-| Stream extraction | NewPipeExtractor |
-| State and concurrency | Kotlin Coroutines, Flow, and ViewModel |
-| Local storage | Room and DataStore |
-| Networking | OkHttp through the project data sources |
-| Images | Coil 3 |
-| Background work | WorkManager |
-| Minimum Android version | Android 7.0 / API 24 |
-| Target Android version | API 35 |
-| Compile Android version | API 37 |
+---
 
-## Project structure
+## 🚀 Features
 
-```text
-app/
-├── src/main/java/        Application and feature source
-├── src/main/res/         Android resources and translations
-├── src/main/assets/      Bundled runtime assets
-├── build.gradle.kts      App module configuration
-└── proguard-rules.pro    Release shrinker rules
+* 🎵 Search and stream music from YouTube Music
+* 🔎 Search for songs, albums, artists, and playlists
+* ▶️ Background playback
+* 📥 Download music for offline playback
+* 🎤 Time-synchronized lyrics
+* 📝 Plain-text lyrics fallback
+* 📚 Playlist creation and management
+* ❤️ Personal library, history, and recommendations
+* 🚗 Android Auto support
+* 🎨 Modern Material 3 interface
+* 🌈 Dynamic Android colors
+* ⚡ Local caching for a faster experience
+* 🔄 Background update checks
+* 💾 Offline-friendly lyrics and downloaded music
 
-gradle/                   Version catalog and Gradle wrapper files
-scripts/                  Android SDK and local build helpers
-.github/workflows/        GitHub Actions build workflow
-```
+---
 
-The application package is `ca.ilianokokoro.umihi.music`.
+## 📸 Screenshots
 
-## Requirements
+<p align="center">
+  <img src="assets/home.jpg" width="30%" alt="Home">
+  <img src="assets/search.jpg" width="30%" alt="Search">
+  <img src="assets/player.jpg" width="30%" alt="Music Player">
+</p>
 
-For a local build, install:
+<p align="center">
+  <img src="assets/lyrics.jpg" width="30%" alt="Lyrics">
+  <img src="assets/library.jpg" width="30%" alt="Library">
+  <img src="assets/settings.jpg" width="30%" alt="Settings">
+</p>
 
-- JDK 21
-- Android SDK with the API 37 preview platform
-- Android SDK build tools
-- Git
+> **More screenshots:**
+> Check the [`assets`](https://github.com/nishan-bajagain/laya-music/tree/main/assets) directory for the complete collection.
 
-Android Studio with a recent stable release is recommended. The project also includes command-line scripts for environments where Android Studio is not available.
+---
 
-## Build locally
+## 🛠️ Technology
 
-Clone the repository and enter its directory:
+| Component        | Technology                   |
+| ---------------- | ---------------------------- |
+| Language         | Kotlin                       |
+| UI               | Jetpack Compose + Material 3 |
+| Playback         | AndroidX Media3 / ExoPlayer  |
+| Music extraction | NewPipeExtractor             |
+| Local storage    | Room + DataStore             |
+| Networking       | OkHttp                       |
+| Images           | Coil 3                       |
+| Background tasks | WorkManager                  |
+| Architecture     | ViewModel + Repository       |
+| Minimum Android  | Android 7.0 (API 24)         |
+
+---
+
+## 📱 Installation
+
+### Download
+
+Download the latest APK from the project's **GitHub Releases** page and install it on your Android device.
+
+### Build from source
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/nishan-bajagain/laya-music.git
 cd laya-music
-```
 
-Create `local.properties` in the project root and point it to your Android SDK:
-
-```properties
-sdk.dir=/path/to/your/android-sdk
-```
-
-The file is intentionally ignored by Git. If you use account features that require the YouTube Music API key, add it locally as `ytm.api.key` or provide it through the `YTM_API_KEY` environment variable.
-
-Install the preview platform if it is not already available:
-
-```bash
-sdkmanager --channel=3 "platforms;android-37.0"
-```
-
-Build a debug APK:
-
-```bash
 ./gradlew assembleDebug
 ```
 
-Build a release APK:
-
-```bash
-./gradlew assembleRelease
-```
-
-The release output is written to:
+The debug APK will be generated inside:
 
 ```text
-app/build/outputs/apk/release/laya.apk
+app/build/outputs/apk/debug/
 ```
 
-On Replit or another Nix-based environment, the project scripts can prepare Java and the Android SDK automatically:
+> **Note:** Android Studio with a recent stable Android SDK is recommended for development.
 
-```bash
-bash scripts/build-debug.sh
-bash scripts/build-release.sh
-```
+---
 
-The convenience command `build-apk.sh` runs the release build.
-
-## Release signing
-
-Release builds use a configured private keystore when all signing values are present. Local builds read these values from `local.properties`; CI builds read them from environment variables. A local debug-key fallback is available for development and testing when no private release keystore is configured. Do not use that fallback for a public release.
-
-Example local properties:
-
-```properties
-keystore.password=...
-key.alias=...
-key.password=...
-```
-
-Never commit these values, the keystore, or a real `.env` file. The provided `.env.example` documents the supported variable names without containing credentials.
-
-## Continuous integration
-
-The GitHub Actions workflow in `.github/workflows/Build.yml` and the root `Build.yml` build release APKs on pushes to `main` and on version tags. The workflow:
-
-1. Installs JDK 21 and the required Android SDK components.
-2. Creates the CI-only `local.properties` SDK entry.
-3. Builds the release APK with Gradle.
-4. Uploads the APK as a workflow artifact.
-5. Attaches the APK to a GitHub release for version tags and published releases.
-
-Configure `YTM_API_KEY`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, and `KEY_PASSWORD` as repository secrets when a signed public release is required.
-
-## Development notes
-
-The app follows a layered structure:
+## 🏗️ Project Structure
 
 ```text
-Compose UI → ViewModel → Repository → Data source / Room
+laya-music/
+├── app/
+│   └── src/
+│       └── main/
+├── assets/
+├── gradle/
+├── scripts/
+├── .github/
+├── LICENSE
+└── README.md
 ```
 
-Playback is managed centrally through Media3, while feature state is exposed through observable flows. Lyrics use a provider policy that treats LRCLIB as the source for timed lyrics and YouTube Music as the plain-text fallback. Cached results are used before making a network request where appropriate.
+---
 
-Run the unit tests with:
+## 🔐 Security
 
-```bash
-./gradlew testDebugUnitTest
-```
+Never commit:
 
-## Contributing
+* Keystores
+* API keys
+* Passwords
+* `.env` files containing secrets
+* Local configuration containing credentials
 
-Keep changes focused, preserve the existing package structure, and avoid committing generated output or local configuration. Before opening a pull request, run the relevant tests and at least one debug build. For changes that affect playback, downloads, authentication, or lyrics, include the device and Android version used for verification.
+For security-related issues, please follow the instructions in [`SECURITY.md`](SECURITY.md).
 
-## Security
+---
 
-Please do not report security issues in public issue threads. Follow the instructions in [SECURITY.md](SECURITY.md) instead.
+## 🤝 Contributing
 
-## License
+Contributions, bug reports, feature requests, and improvements are welcome.
 
-Laya Music is distributed under the GNU General Public License v3.0. See [LICENSE](LICENSE) for the full text.
+Before submitting a pull request:
+
+1. Test your changes.
+2. Make sure the project builds successfully.
+3. Keep changes focused and clean.
+4. Avoid committing generated files or secrets.
+
+---
+
+## 📄 License
+
+Laya Music is licensed under the **GNU General Public License v3.0**.
+
+See [`LICENSE`](LICENSE) for the complete license.
+
+---
+
+<p align="center">
+  Made with ❤️ using Kotlin & Jetpack Compose
+</p>
+
+<p align="center">
+  <strong>Laya Music</strong> — Your music, your way. 🎧
+</p>
