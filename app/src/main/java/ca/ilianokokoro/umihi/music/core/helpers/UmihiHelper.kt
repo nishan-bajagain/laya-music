@@ -1,6 +1,7 @@
 package ca.ilianokokoro.umihi.music.core.helpers
 
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.os.Environment
 import ca.ilianokokoro.umihi.music.core.Constants
 import ca.ilianokokoro.umihi.music.core.UmihiHttpClient
@@ -101,6 +102,37 @@ object UmihiHelper {
                 null
             }
         }
+    }
+
+    /**
+     * Computes a power-of-two [BitmapFactory.Options.inSampleSize] that downsamples
+     * an image with the given [BitmapFactory.Options.outWidth]/[outHeight] bounds so
+     * the decoded bitmap stays close to [reqWidth] x [reqHeight] without ever
+     * allocating a full-resolution intermediate.
+     */
+    fun calculateInSampleSize(
+        bounds: BitmapFactory.Options,
+        reqWidth: Int,
+        reqHeight: Int
+    ): Int {
+        val height = bounds.outHeight
+        val width = bounds.outWidth
+        var inSampleSize = 1
+
+        if (height > reqHeight || width > reqWidth) {
+            val halfHeight = height / 2
+            val halfWidth = width / 2
+
+            // Largest power of two that keeps both dimensions above the request.
+            while (
+                (halfHeight / inSampleSize) >= reqHeight &&
+                (halfWidth / inSampleSize) >= reqWidth
+            ) {
+                inSampleSize *= 2
+            }
+        }
+
+        return inSampleSize
     }
 
     fun Float.speedLabel(): String {

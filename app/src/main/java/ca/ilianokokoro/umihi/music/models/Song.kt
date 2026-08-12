@@ -85,11 +85,25 @@ data class Song(
         get() = audioFilePath != null && thumbnailPath != null
 
 
+    /**
+     * Fetches the remote artwork and decodes it downsampled to ~256x256 — a
+     * notification large icon only needs that much, and decoding the raw
+     * maxresdefault (~1920x1080) would allocate a multi-MB ARGB_8888 bitmap
+     * per download notification.
+     */
     suspend fun getThumbnailBitmap(): Bitmap? {
-        val bytes = UmihiHelper.fetchArtworkBytes(thumbnailHref)
-        return bytes?.let {
-            BitmapFactory.decodeByteArray(it, 0, it.size)
-        }
+        val bytes = UmihiHelper.fetchArtworkBytes(thumbnailHref) ?: return null
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+
+        val sampleSize = UmihiHelper.calculateInSampleSize(
+            bounds,
+            reqWidth = 256,
+            reqHeight = 256
+        )
+        val opts = BitmapFactory.Options().apply { inSampleSize = sampleSize }
+        return BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)
     }
 
     override fun equals(other: Any?): Boolean {

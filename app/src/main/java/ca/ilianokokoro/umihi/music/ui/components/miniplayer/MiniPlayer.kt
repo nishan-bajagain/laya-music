@@ -66,7 +66,8 @@ fun MiniPlayer(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             SquareImage(
-                uri = currentSong.thumbnailPath ?: currentSong.thumbnailHref,
+                localPath = currentSong.thumbnailPath,
+                remoteUrl = currentSong.thumbnailHref,
                 modifier = Modifier.size(50.dp),
             )
 

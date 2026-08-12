@@ -2,59 +2,60 @@ package ca.ilianokokoro.umihi.music.ui.screens.profile
 
 import android.app.Application
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Login
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
+import ca.ilianokokoro.umihi.music.R
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,22 +66,22 @@ fun ProfileScreen(
     onLogin: () -> Unit = {},
     application: Application
 ) {
-    val context = LocalContext.current
-    val datastoreRepository = remember { DatastoreRepository(context) }
-    val scope = rememberCoroutineScope()
-
     val profileViewModel: ProfileViewModel = viewModel(
         factory = ProfileViewModel.Factory(application)
     )
 
-    val accountName by datastoreRepository.accountName.collectAsState(initial = "")
-    val accountEmail by datastoreRepository.accountEmail.collectAsState(initial = "")
-    val accountAvatarUrl by datastoreRepository.accountAvatarUrl.collectAsState(initial = "")
-    val cookies by datastoreRepository.cookies.collectAsState(initial = ca.ilianokokoro.umihi.music.models.Cookies())
+    // All account state flows through the ViewModel — a single source of truth,
+    // so the screen can never show stale values while a fetch is updating them.
+    val accountName by profileViewModel.accountName.collectAsStateWithLifecycle()
+    val accountEmail by profileViewModel.accountEmail.collectAsStateWithLifecycle()
+    val accountAvatarUrl by profileViewModel.accountAvatarUrl.collectAsStateWithLifecycle()
+    val cookies by profileViewModel.cookies.collectAsStateWithLifecycle()
+    val isRefreshing by profileViewModel.isRefreshing.collectAsStateWithLifecycle()
+    val downloadedSongCount by profileViewModel.downloadedSongCount.collectAsStateWithLifecycle()
+    val downloadLocation by profileViewModel.downloadLocation.collectAsStateWithLifecycle()
 
     val isLoggedIn = cookies.isNotEmpty()
-    var avatarRetry by remember(accountAvatarUrl) { mutableIntStateOf(0) }
-    var avatarFailed by remember(accountAvatarUrl) { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     // Re-fetch profile data whenever the screen opens with a logged-in session that has
     // missing data. Covers existing sessions that pre-date profile caching.
@@ -101,156 +102,158 @@ fun ProfileScreen(
                     }
                 }
             )
-        }
+        },
+        contentWindowInsets = WindowInsets(0.dp)
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
                 .padding(paddingValues)
-                .padding(horizontal = 24.dp, vertical = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // Avatar
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.size(120.dp)
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
             ) {
-                // Keep the default avatar mounted underneath the request so
-                // loading and network failures never leave an empty circle.
-                Icon(
-                    imageVector = Icons.Outlined.AccountCircle,
-                    contentDescription = "Profile picture",
-                    modifier = Modifier.size(120.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                // Hero header (shared by logged-in and logged-out states)
+                ProfileHeader(
+                    avatarUrl = if (isLoggedIn) accountAvatarUrl else "",
+                    displayName = accountName,
+                    email = accountEmail,
+                    isRefreshing = isRefreshing,
+                    isLoggedIn = isLoggedIn
                 )
-                if (accountAvatarUrl.isNotBlank() && !avatarFailed) {
-                    val avatarRequest = remember(accountAvatarUrl, avatarRetry) {
-                        ImageRequest.Builder(context)
-                            // The fragment changes Coil's cache key but is not sent
-                            // to the avatar server, so a failed first request can
-                            // be retried without disabling normal image caching.
-                            .data("$accountAvatarUrl#avatarRetry=$avatarRetry")
-                            // 120dp avatar ≈ 360px @3x — bound the decode instead
-                            // of loading the raw URL at full resolution.
-                            .size(256, 256)
-                            .build()
-                    }
-                    AsyncImage(
-                        model = avatarRequest,
-                        contentDescription = "Profile picture",
-                        modifier = Modifier
-                            .size(120.dp)
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop,
-                        onError = {
-                            if (avatarRetry == 0) {
-                                avatarRetry = 1
-                            } else {
-                                avatarFailed = true
-                            }
-                        }
-                    )
-                }
-            }
 
-            // Name / logged-out state
-            if (!isLoggedIn) {
-                Text(
-                    text = "Not logged in",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    text = "Sign in with your YouTube account to access your playlists and profile.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
-                Button(
-                    onClick = onLogin,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    ) {
-                        Icon(Icons.AutoMirrored.Outlined.Logout, contentDescription = null)
-                        Text("Sign In", style = MaterialTheme.typography.labelLarge)
-                    }
-                }
-            } else {
-                Text(
-                    text = accountName.ifBlank { "YouTube Account" },
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    textAlign = TextAlign.Center
-                )
-                if (accountEmail.isNotBlank()) {
-                    Text(
-                        text = accountEmail,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
+                Spacer(modifier = Modifier.height(20.dp))
 
-            // Account info card
-            if (isLoggedIn) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                    ),
-                    shape = RoundedCornerShape(16.dp)
+                // Glanceable stat cards
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(horizontal = 24.dp)
                 ) {
-                    Column(modifier = Modifier.padding(4.dp)) {
-                        ProfileInfoRow(
-                            icon = { Icon(Icons.Outlined.Person, contentDescription = null) },
-                            label = "Display Name",
-                            value = accountName.ifBlank { "—" }
-                        )
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant
-                        )
-                        ProfileInfoRow(
-                            icon = { Icon(Icons.Outlined.Email, contentDescription = null) },
-                            label = "Email",
-                            value = accountEmail.ifBlank { "—" }
-                        )
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant
-                        )
-                        ProfileInfoRow(
-                            icon = { Icon(Icons.Outlined.MusicNote, contentDescription = null) },
-                            label = "Connected Service",
+                    item {
+                        ProfileStatCard(
+                            icon = Icons.Outlined.MusicNote,
+                            title = "Connected Service",
                             value = "YouTube Music"
                         )
                     }
+                    item {
+                        ProfileStatCard(
+                            icon = Icons.Rounded.Download,
+                            title = "Downloads",
+                            value = stringResource(R.string.songs, downloadedSongCount)
+                        )
+                    }
+                    item {
+                        ProfileStatCard(
+                            icon = Icons.Outlined.FolderOpen,
+                            title = "Download Location",
+                            value = downloadLocation.ifBlank {
+                                stringResource(R.string.internal_storage)
+                            }
+                        )
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                if (isLoggedIn) {
+                    Spacer(modifier = Modifier.height(20.dp))
 
-                // Logout button
-                Button(
+                    // Informational settings-style rows (Material3 ListItem, matching
+                    // the visual language used across the app's settings screens).
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                        ),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Column {
+                            ListItem(
+                                leadingContent = {
+                                    Icon(Icons.Outlined.Person, contentDescription = null)
+                                },
+                                supportingContent = { Text(accountName.ifBlank { "—" }) }
+                            ) {
+                                Text("Display Name")
+                            }
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant
+                            )
+                            ListItem(
+                                leadingContent = {
+                                    Icon(Icons.Outlined.Email, contentDescription = null)
+                                },
+                                supportingContent = { Text(accountEmail.ifBlank { "—" }) }
+                            ) {
+                                Text("Email")
+                            }
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant
+                            )
+                            ListItem(
+                                leadingContent = {
+                                    Icon(Icons.Outlined.MusicNote, contentDescription = null)
+                                },
+                                supportingContent = { Text("YouTube Music") }
+                            ) {
+                                Text("Connected Service")
+                            }
+                        }
+                    }
+                } else {
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Button(
+                        onClick = onLogin,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        ) {
+                            Icon(Icons.AutoMirrored.Outlined.Login, contentDescription = null)
+                            Text("Sign In", style = MaterialTheme.typography.labelLarge)
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+
+            // Logout — pinned below the scrollable content and visually separated
+            // from the informational rows above so it doesn't read as an extra row.
+            if (isLoggedIn) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                FilledTonalButton(
                     onClick = {
                         scope.launch {
-                            datastoreRepository.logOut()
+                            profileViewModel.logOut()
                             onLoggedOut()
                             onBack()
                         }
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            start = 24.dp,
+                            end = 24.dp,
+                            top = 16.dp,
+                            bottom = 16.dp +
+                                WindowInsets.navigationBars.asPaddingValues()
+                                    .calculateBottomPadding() / 2
+                        ),
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -264,42 +267,46 @@ fun ProfileScreen(
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
 
 @Composable
-private fun ProfileInfoRow(
-    icon: @Composable () -> Unit,
-    label: String,
-    value: String
+private fun ProfileStatCard(
+    icon: ImageVector,
+    title: String,
+    value: String,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalAlignment = Alignment.CenterVertically
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        ),
+        shape = RoundedCornerShape(16.dp)
     ) {
-        Box(
-            modifier = Modifier.size(24.dp),
-            contentAlignment = Alignment.Center
+        Column(
+            modifier = Modifier
+                .width(150.dp)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            icon()
-        }
-        Column(modifier = Modifier.weight(1f)) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
             Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                text = title,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Medium
             )
             Text(
                 text = value,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Medium
+                textAlign = TextAlign.Start,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }

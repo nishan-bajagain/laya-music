@@ -27,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -40,6 +41,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -69,6 +71,7 @@ import ca.ilianokokoro.umihi.music.ui.components.playlist.PlaylistCard
 import ca.ilianokokoro.umihi.music.ui.navigation.viewmodels.SharedViewModel
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
+import java.io.File
 
 @Composable
 fun HomeScreen(
@@ -394,9 +397,16 @@ private fun RecommendationCard(
     onClick: () -> Unit,
 ) {
     val context = LocalContext.current
-    val imageRequest = remember(song.thumbnailPath, song.thumbnailHref) {
+    var retryToken by remember(song.thumbnailPath, song.thumbnailHref) { mutableIntStateOf(0) }
+    var failed by remember(song.thumbnailPath, song.thumbnailHref) { mutableStateOf(false) }
+
+    // Prefer the local cached copy, but if it's missing/corrupt, fall back to
+    // the remote URL instead of failing outright.
+    val primaryUrl = song.thumbnailPath?.takeIf { File(it).exists() } ?: song.thumbnailHref
+
+    val imageRequest = remember(primaryUrl, retryToken) {
         ImageRequest.Builder(context)
-            .data(song.thumbnailPath ?: song.thumbnailHref)
+            .data(if (retryToken == 0) primaryUrl else song.thumbnailHref)
             .size(384, 384)
             .build()
     }
@@ -409,14 +419,35 @@ private fun RecommendationCard(
             containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh
         )
     ) {
-        AsyncImage(
-            model = imageRequest,
-            contentDescription = song.title,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(152.dp),
-            contentScale = ContentScale.Crop
-        )
+        Box(modifier = Modifier.fillMaxWidth().height(152.dp)) {
+            // Base layer so a failed/loading image never leaves a blank card.
+            Icon(
+                imageVector = Icons.Outlined.MusicNote,
+                contentDescription = null,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(40.dp),
+                tint = androidx.compose.material3.MaterialTheme.colorScheme
+                    .onSurfaceVariant
+                    .copy(alpha = 0.4f)
+            )
+            if (!failed) {
+                AsyncImage(
+                    model = imageRequest,
+                    contentDescription = song.title,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                    onError = {
+                        if (retryToken == 0 && primaryUrl != song.thumbnailHref) {
+                            // local file failed — retry against the remote URL once
+                            retryToken = 1
+                        } else {
+                            failed = true
+                        }
+                    }
+                )
+            }
+        }
         Column(
             modifier = Modifier.padding(10.dp),
             verticalArrangement = Arrangement.spacedBy(3.dp)

@@ -367,7 +367,9 @@ fun Thumbnail(
         val size = minOf(maxWidth, maxHeight)
 
         SquareImage(
-            uri = href,
+            // Queue songs come from MediaItems and never carry a local thumbnail
+            // path, so only the remote URL is available here.
+            remoteUrl = href,
             modifier = Modifier.size(size)
         )
     }

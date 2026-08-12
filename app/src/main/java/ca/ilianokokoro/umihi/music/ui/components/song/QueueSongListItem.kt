@@ -59,7 +59,8 @@ fun QueueSongListItem(
                     .aspectRatio(1f)
             ) {
                 SquareImage(
-                    uri = song.thumbnailPath ?: song.thumbnailHref,
+                    localPath = song.thumbnailPath,
+                    remoteUrl = song.thumbnailHref,
                     modifier = Modifier.matchParentSize()
                 )
             }

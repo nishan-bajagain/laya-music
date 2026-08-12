@@ -154,7 +154,8 @@ fun AddToPlaylistBottomSheet(
                         ListItem(
                             leadingContent = {
                                 SquareImage(
-                                    uri = playlist.coverPath ?: playlist.coverHref,
+                                    localPath = playlist.coverPath,
+                                    remoteUrl = playlist.coverHref,
                                     modifier = Modifier.size(48.dp)
                                 )
                             },

@@ -77,7 +77,10 @@ fun PlaylistInfo(
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         if (!playlist.info.isDownloadedPlaylist) {
-            SquareImage(uri = playlist.info.coverPath ?: playlist.info.coverHref)
+            SquareImage(
+                localPath = playlist.info.coverPath,
+                remoteUrl = playlist.info.coverHref
+            )
         } else {
             Icon(
                 imageVector = Icons.Rounded.Download,

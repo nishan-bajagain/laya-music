@@ -48,6 +48,11 @@ import kotlin.coroutines.cancellation.CancellationException
  * Every entry point is gated by [BuildConfig.SELF_UPDATE_ENABLED] so none of
  * this runs in the Play-Store `store` flavor. All failures are silent (logged
  * via [LogHelper.printe]) — a failed update check must never surface an error.
+ *
+ * [scope] is intentionally process-lifetime (SupervisorJob + Dispatchers.IO):
+ * update checks and APK-download enqueues are fire-and-forget work that must
+ * survive the caller's composition. Every job launched on it terminates on its
+ * own (a single network call or WorkManager enqueue) — do NOT cancel the scope.
  */
 object UpdateManager {
 

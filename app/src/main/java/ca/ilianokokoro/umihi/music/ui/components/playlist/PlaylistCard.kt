@@ -44,7 +44,8 @@ fun PlaylistCard(
         ) {
             if (!playlistInfo.isDownloadedPlaylist) {
                 SquareImage(
-                    uri = playlistInfo.coverPath ?: playlistInfo.coverHref,
+                    localPath = playlistInfo.coverPath,
+                    remoteUrl = playlistInfo.coverHref,
                     contentDescription = stringResource(R.string.playlist_cover),
                 )
             } else {

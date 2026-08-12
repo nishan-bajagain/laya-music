@@ -29,6 +29,11 @@ class MusicApplication : Application(), SingletonImageLoader.Factory {
             .diskCache {
                 DiskCache.Builder()
                     .maxSizePercent(0.02)
+                    // 2% of a device with heavy other-app storage use can be only
+                    // a few MB — small enough that thumbnails get evicted
+                    // constantly, forcing re-fetches. Never let the cap fall
+                    // below 100MB so cached art survives longer.
+                    .minimumMaxSizeBytes(100L * 1024 * 1024)
                     .build()
             }
             .build()

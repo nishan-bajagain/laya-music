@@ -12,6 +12,10 @@ import java.lang.ref.WeakReference
 
 object ScreenAwakeManager {
 
+    // [scope] is intentionally process-lifetime (SupervisorJob + Dispatchers.Main):
+    // keep-screen-on state must be applied for every Activity registration and
+    // survive individual Activity lifecycles. Jobs are single short reads that
+    // terminate on their own — do NOT cancel the scope.
     private var currentActivity: WeakReference<Activity>? = null
     private var datastoreRepository: WeakReference<DatastoreRepository>? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)

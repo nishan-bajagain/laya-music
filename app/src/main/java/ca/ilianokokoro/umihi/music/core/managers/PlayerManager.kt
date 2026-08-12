@@ -35,6 +35,14 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 object PlayerManager {
+
+    /**
+     * [scope] is intentionally process-lifetime (SupervisorJob + Dispatchers.Default):
+     * playback state, the sleep timer and playback-speed preferences must survive any
+     * single Activity/screen (and configuration changes). Do NOT cancel it — every
+     * job launched on it either terminates on its own (a single network/controller
+     * call) or is explicitly cancelled ([sleepTimerJob] via [cancelSleepTimer]).
+     */
     @Volatile
     private var controllerFuture: ListenableFuture<MediaController>? = null
 
@@ -55,6 +63,13 @@ object PlayerManager {
 
     private var sleepTimerJob: Job? = null
     private var sleepTimerEndOfSongListener: Player.Listener? = null
+
+    // The exact controller the end-of-song listener was registered on. Kept
+    // separate from [currentController] so cancelSleepTimer() always removes
+    // the listener from the instance it was added to — even across a
+    // controller disconnect/reconnect, where currentController would have
+    // been replaced and removeListener on it would silently no-op.
+    private var sleepTimerListenerController: MediaController? = null
 
     private val _sleepTimerRemainingSeconds = MutableStateFlow<Long?>(null)
     val sleepTimerRemainingSeconds: StateFlow<Long?> = _sleepTimerRemainingSeconds.asStateFlow()
@@ -371,6 +386,7 @@ object PlayerManager {
 
         controller.addListener(listener)
         sleepTimerEndOfSongListener = listener
+        sleepTimerListenerController = controller
 
         sleepTimerJob = scope.launch {
             while (isActive) {
@@ -411,10 +427,15 @@ object PlayerManager {
         sleepTimerJob?.cancel()
         sleepTimerJob = null
 
+        // Remove the listener from the exact controller it was registered on,
+        // not [currentController] — the latter may be a *new* instance after a
+        // controller reconnect, and removing from it would leave the stale
+        // listener attached to the disposed controller.
         sleepTimerEndOfSongListener?.let { listener ->
-            currentController?.removeListener(listener)
+            sleepTimerListenerController?.removeListener(listener)
         }
         sleepTimerEndOfSongListener = null
+        sleepTimerListenerController = null
         _sleepTimerRemainingSeconds.value = null
     }
 

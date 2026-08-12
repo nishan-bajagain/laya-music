@@ -218,11 +218,14 @@ object NotificationManager {
         context: Context,
         song: Song,
     ) {
+        // getThumbnailBitmap() is only used here, so the returned bitmap is not
+        // shared anywhere else — it is safe to recycle the local reference below.
+        val largeIcon = song.getThumbnailBitmap()
         val notification = getBaseNotification(context, NotificationChannels.SONG_DOWNLOAD)
             .setContentTitle(song.title)
             .setContentText(context.getString(R.string.song_downloaded))
             .setSmallIcon(android.R.drawable.stat_sys_download_done)
-            .setLargeIcon(song.getThumbnailBitmap())
+            .setLargeIcon(largeIcon)
             .setAutoCancel(true)
             .setGroup(NotificationChannels.SONG_DOWNLOAD.group)
             .setCategory(NotificationCompat.CATEGORY_STATUS)
@@ -230,6 +233,14 @@ object NotificationManager {
             .build()
 
         androidNotificationManager.notify(getNotificationID(song.youtubeId), notification)
+
+        // The framework has parceled the bitmap into the notification by now, so
+        // the local reference is no longer needed. Recycling it eagerly matters
+        // during a bulk playlist download, where one thumbnail per song would
+        // otherwise stay allocated until GC.
+        largeIcon?.let {
+            if (!it.isRecycled) it.recycle()
+        }
     }
 
     fun showUpdateWaitingForWifi(context: Context) {
