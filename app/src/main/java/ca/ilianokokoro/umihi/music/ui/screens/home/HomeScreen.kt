@@ -34,6 +34,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -41,7 +42,6 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -52,12 +52,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ca.ilianokokoro.umihi.music.R
 import ca.ilianokokoro.umihi.music.core.Constants
 import ca.ilianokokoro.umihi.music.core.helpers.ComposeHelper
+import ca.ilianokokoro.umihi.music.core.helpers.UmihiHelper
 import ca.ilianokokoro.umihi.music.core.managers.PlayerManager
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository
 import ca.ilianokokoro.umihi.music.models.PlaylistInfo
@@ -65,13 +67,13 @@ import ca.ilianokokoro.umihi.music.models.Song
 import ca.ilianokokoro.umihi.music.ui.components.ErrorMessage
 import ca.ilianokokoro.umihi.music.ui.components.FadingStatusBarWrapper
 import ca.ilianokokoro.umihi.music.ui.components.LoadingAnimation
+import ca.ilianokokoro.umihi.music.ui.components.SquareImage
 import ca.ilianokokoro.umihi.music.ui.components.dialog.PlaylistCreationDialog
 import ca.ilianokokoro.umihi.music.ui.components.materialu.MaterialUButton
 import ca.ilianokokoro.umihi.music.ui.components.playlist.PlaylistCard
 import ca.ilianokokoro.umihi.music.ui.navigation.viewmodels.SharedViewModel
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
-import java.io.File
 
 @Composable
 fun HomeScreen(
@@ -169,11 +171,20 @@ fun HomeScreen(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         // Profile avatar button (left)
+                                        var avatarFailed by remember(accountAvatarUrl) {
+                                            mutableStateOf(false)
+                                        }
                                         IconButton(onClick = onProfilePress) {
-                                            if (isLoggedIn && accountAvatarUrl.isNotBlank()) {
-                                                val avatarRequest = remember(accountAvatarUrl) {
+                                            // Google's accountPhoto can come back as a
+                                            // protocol-relative 96px thumbnail — normalize
+                                            // before Coil sees it so it loads and isn't blurry.
+                                            val safeAvatarUrl = UmihiHelper.normalizeGoogleAvatarUrl(
+                                                accountAvatarUrl
+                                            )
+                                            if (isLoggedIn && safeAvatarUrl.isNotBlank() && !avatarFailed) {
+                                                val avatarRequest = remember(safeAvatarUrl) {
                                                     ImageRequest.Builder(context)
-                                                        .data(accountAvatarUrl)
+                                                        .data(safeAvatarUrl)
                                                         // 36dp avatar ≈ 108px @3x — bound the
                                                         // decode well below the raw URL size.
                                                         .size(96, 96)
@@ -185,7 +196,8 @@ fun HomeScreen(
                                                     modifier = Modifier
                                                         .size(36.dp)
                                                         .clip(CircleShape),
-                                                    contentScale = ContentScale.Crop
+                                                    contentScale = ContentScale.Crop,
+                                                    onError = { avatarFailed = true }
                                                 )
                                             } else {
                                                 Icon(
@@ -396,74 +408,44 @@ private fun RecommendationCard(
     song: Song,
     onClick: () -> Unit,
 ) {
-    val context = LocalContext.current
-    var retryToken by remember(song.thumbnailPath, song.thumbnailHref) { mutableIntStateOf(0) }
-    var failed by remember(song.thumbnailPath, song.thumbnailHref) { mutableStateOf(false) }
-
-    // Prefer the local cached copy, but if it's missing/corrupt, fall back to
-    // the remote URL instead of failing outright.
-    val primaryUrl = song.thumbnailPath?.takeIf { File(it).exists() } ?: song.thumbnailHref
-
-    val imageRequest = remember(primaryUrl, retryToken) {
-        ImageRequest.Builder(context)
-            .data(if (retryToken == 0) primaryUrl else song.thumbnailHref)
-            .size(384, 384)
-            .build()
-    }
-
     Card(
         onClick = onClick,
         modifier = Modifier.width(152.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         )
     ) {
-        Box(modifier = Modifier.fillMaxWidth().height(152.dp)) {
-            // Base layer so a failed/loading image never leaves a blank card.
-            Icon(
-                imageVector = Icons.Outlined.MusicNote,
-                contentDescription = null,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(40.dp),
-                tint = androidx.compose.material3.MaterialTheme.colorScheme
-                    .onSurfaceVariant
-                    .copy(alpha = 0.4f)
-            )
-            if (!failed) {
-                AsyncImage(
-                    model = imageRequest,
-                    contentDescription = song.title,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop,
-                    onError = {
-                        if (retryToken == 0 && primaryUrl != song.thumbnailHref) {
-                            // local file failed — retry against the remote URL once
-                            retryToken = 1
-                        } else {
-                            failed = true
-                        }
-                    }
-                )
-            }
-        }
+        // SquareImage owns the whole poster pipeline: sanitized candidate
+        // cycling (local file → API art URL → i.ytimg.com fallback), the
+        // placeholder icon while loading, and the title overlay if every
+        // candidate fails — identical behavior to every other poster in the app.
+        SquareImage(
+            localPath = song.thumbnailPath,
+            remoteUrl = song.thumbnailHref,
+            fallbackUrl = song.thumbnailFallbackUrl,
+            contentDescription = song.title,
+            cornerRadius = 0.dp,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(152.dp)
+        )
         Column(
             modifier = Modifier.padding(10.dp),
             verticalArrangement = Arrangement.spacedBy(3.dp)
         ) {
             Text(
                 text = song.title,
-                style = androidx.compose.material3.MaterialTheme.typography.titleSmall,
+                style = MaterialTheme.typography.titleSmall,
                 maxLines = 2,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = song.artist,
-                style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
-                color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis
             )
         }
     }

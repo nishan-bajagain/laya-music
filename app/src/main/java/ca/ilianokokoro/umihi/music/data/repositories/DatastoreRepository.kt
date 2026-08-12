@@ -25,10 +25,12 @@ import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository.Prefere
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository.PreferenceKeys.LAST_UPDATE_RESPONSE
 import ca.ilianokokoro.umihi.music.models.Cookies
 import ca.ilianokokoro.umihi.music.models.UmihiSettings
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = Constants.Datastore.NAME)
@@ -120,6 +122,34 @@ class DatastoreRepository(private val context: Context) {
         saveCookies(Cookies())
         saveDataSyncId("")
         clearAccountInfo()
+        clearWebViewSession()
+    }
+
+    /**
+     * Clears the WebView's Google session (cookies, DOM storage) so a logged-out
+     * user is not silently signed back in when the login page opens. The app's
+     * own DataStore cookies are cleared by [logOut] itself — without this, the
+     * login WebView sees the surviving Google session cookie and auto-authenticates
+     * with no email/password prompt.
+     */
+    private suspend fun clearWebViewSession() {
+        withContext(Dispatchers.IO) {
+            runCatching {
+                android.webkit.CookieManager.getInstance().apply {
+                    removeAllCookies(null)
+                    flush()
+                }
+            }
+            runCatching {
+                android.webkit.WebStorage.getInstance().deleteAllData()
+            }
+            runCatching {
+                android.webkit.WebViewDatabase.getInstance(context)
+                    .clearFormData()
+                android.webkit.WebViewDatabase.getInstance(context)
+                    .clearHttpAuthUsernamePassword()
+            }
+        }
     }
 
     suspend fun saveDataSyncId(newId: String) {

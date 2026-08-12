@@ -68,6 +68,8 @@ fun MiniPlayer(
             SquareImage(
                 localPath = currentSong.thumbnailPath,
                 remoteUrl = currentSong.thumbnailHref,
+                fallbackUrl = currentSong.thumbnailFallbackUrl,
+                contentDescription = currentSong.title,
                 modifier = Modifier.size(50.dp),
             )
 

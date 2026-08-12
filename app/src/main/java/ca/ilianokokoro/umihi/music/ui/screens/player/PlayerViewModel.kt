@@ -253,10 +253,10 @@ class PlayerViewModel(application: Application) :
         viewModelScope.launch {
             while (true) {
                 val state = _uiState.value
+                val controller = PlayerManager.currentController
+                val playing = PlayerManager.isPlaying
 
                 if (!state.isSeekBarHeld && !state.isLoading) {
-                    val controller = PlayerManager.currentController
-
                     val rawPosition = controller?.currentPosition
                     val rawDuration = controller?.duration
 
@@ -289,7 +289,17 @@ class PlayerViewModel(application: Application) :
                     }
                 }
 
-                delay(Constants.Player.PROGRESS_UPDATE_DELAY.milliseconds)
+                // Battery: poll every 250ms while actively playing (the seek bar
+                // needs smooth updates), but back off to 2s when paused or idle.
+                // This loop otherwise wakes the CPU every 250ms for the whole app
+                // session — even with the player closed or in the background.
+                delay(
+                    if (playing) {
+                        Constants.Player.PROGRESS_UPDATE_DELAY.milliseconds
+                    } else {
+                        2000.milliseconds
+                    }
+                )
             }
         }
     }

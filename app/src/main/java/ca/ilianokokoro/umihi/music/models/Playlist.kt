@@ -11,6 +11,7 @@ import androidx.room.Junction
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import ca.ilianokokoro.umihi.music.core.Constants
+import ca.ilianokokoro.umihi.music.core.helpers.UmihiHelper
 import kotlinx.serialization.Serializable
 
 
@@ -53,12 +54,20 @@ data class PlaylistInfo(
 
 
     fun toBrowsableMediaItem(): MediaItem {
+        // Sanitize the remote cover so protocol-relative API URLs ("//lh3...")
+        // never reach Media3's bitmap loader as unfetchable scheme-less URIs
+        // (Android Auto / system media art).
+        val artworkUri = coverPath?.let { it.toUri() }
+            ?: UmihiHelper.sanitizeImageUrl(coverHref)
+                .takeIf { it.isNotBlank() }
+                ?.toUri()
+
         return MediaItem.Builder()
             .setMediaId("${Constants.ExoPlayer.Library.PLAYLIST_PREFIX}$id")
             .setMediaMetadata(
                 MediaMetadata.Builder()
                     .setTitle(title)
-                    .setArtworkUri((coverPath ?: coverHref).takeIf { it.isNotBlank() }?.toUri())
+                    .setArtworkUri(artworkUri)
                     .setIsBrowsable(true)
                     .setIsPlayable(false)
                     .setMediaType(MediaMetadata.MEDIA_TYPE_PLAYLIST)

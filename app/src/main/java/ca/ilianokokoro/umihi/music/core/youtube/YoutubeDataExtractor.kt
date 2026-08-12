@@ -9,6 +9,7 @@ import ca.ilianokokoro.umihi.music.core.helpers.LogHelper.printd
 import ca.ilianokokoro.umihi.music.core.helpers.LogHelper.printe
 import ca.ilianokokoro.umihi.music.core.helpers.UmihiHelper.safeArray
 import ca.ilianokokoro.umihi.music.core.helpers.UmihiHelper.safeObject
+import ca.ilianokokoro.umihi.music.core.helpers.UmihiHelper.sanitizeImageUrl
 import ca.ilianokokoro.umihi.music.data.database.AppDatabase
 import ca.ilianokokoro.umihi.music.models.PlaylistInfo
 import ca.ilianokokoro.umihi.music.models.Song
@@ -54,7 +55,11 @@ object YoutubeDataExtractor {
                 ?.safeArray()?.lastOrNull()
                 ?.safeObject()?.get("url")
                 ?.jsonPrimitive?.contentOrNull ?: ""
-        return url
+        // The innerTube API often returns protocol-relative URLs ("//lh3.google...")
+        // or whitespace-padded values. Normalizing here means every stored thumbnail
+        // is a full, fetchable https URL instead of a scheme-less string Coil's
+        // NetworkFetcher refuses ("no fetcher found").
+        return sanitizeImageUrl(url)
     }
 
     fun getSongInfo(songMap: JsonElement, songInfoIndex: SongInfoType): String {
@@ -524,7 +529,7 @@ object YoutubeDataExtractor {
             ?.safeObject()?.get("url")
             ?.jsonPrimitive?.contentOrNull
 
-        return url ?: ""
+        return sanitizeImageUrl(url)
     }
 
     private suspend fun parseSongsFromContents(

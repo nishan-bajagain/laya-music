@@ -90,7 +90,8 @@ class PlaylistDownloadWorker(
                                     appContext,
                                     fullSong.thumbnailHref,
                                     song.youtubeId,
-                                    customBasePath
+                                    customBasePath,
+                                    fallbackUrl = fullSong.thumbnailFallbackUrl
                                 )
 
                                 // Always write authoritative metadata from the API response.

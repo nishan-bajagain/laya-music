@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.BitmapFactory
 import android.os.Environment
 import ca.ilianokokoro.umihi.music.core.Constants
+import ca.ilianokokoro.umihi.music.core.ImageErrorLog
 import ca.ilianokokoro.umihi.music.core.UmihiHttpClient
 import ca.ilianokokoro.umihi.music.extensions.cappedTo
 import kotlinx.coroutines.Dispatchers
@@ -70,37 +71,86 @@ object UmihiHelper {
     }
 
 
-    suspend fun fetchArtworkBytes(url: String): ByteArray? {
-        return withContext(Dispatchers.IO) {
-            try {
-                val request = Request.Builder()
-                    .url(url)
-                    .get()
-                    .build()
+    /**
+     * Normalizes an image URL before it is stored or fetched. The YT Music API
+     * frequently returns protocol-relative URLs ("//lh3.googleusercontent.com/...")
+     * which Coil/OkHttp cannot fetch (no scheme → "no fetcher found" error), while
+     * the same asset served from a full "https://" URL loads fine. Trimming and
+     * prefixing the scheme turns those broken URLs into fetchable ones. Returns
+     * "" for blank/null/invalid input so callers can skip the candidate.
+     */
+    fun sanitizeImageUrl(url: String?): String {
+        if (url.isNullOrBlank()) return ""
+        var trimmed = url.trim()
+        if (trimmed.equals("null", ignoreCase = true)) return ""
+        if (trimmed.startsWith("//")) trimmed = "https:$trimmed"
+        if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) return ""
+        return trimmed
+    }
 
-                val bytes = UmihiHttpClient.client
-                    .newCall(request)
-                    .execute()
-                    .use { response ->
-                        if (!response.isSuccessful) {
-                            throw IllegalStateException(
-                                "Failed to fetch artwork. HTTP ${response.code}: ${response.message}"
-                            )
+    /**
+     * Normalizes a Google account-photo URL for display: sanitizes it (see
+     * [sanitizeImageUrl]) and upgrades the `=sNN-c` size suffix the
+     * account_menu API returns — usually `=s96-c`, a 96px thumbnail that looks
+     * pixelated when shown at 140dp (~420px @3x) — to `=s256-c` so the served
+     * image matches the avatar's on-screen size. Handles trailing variants
+     * like `=s96-c-k-no`. Returns "" for unusable URLs.
+     */
+    fun normalizeGoogleAvatarUrl(url: String?): String {
+        val sanitized = sanitizeImageUrl(url)
+        if (sanitized.isBlank()) return ""
+        return sanitized.replace(Regex("=s\\d+-c[^?]*"), "=s256-c")
+    }
+
+    /**
+     * Fetches artwork bytes, trying [url] first and falling back to
+     * [fallbackUrl] (e.g. the universal i.ytimg.com thumbnail) if the primary
+     * CDN host is unreachable or rejects the request. The result is decoded
+     * once, bounded via [cappedTo], so large thumbnails (e.g. ~1920×1080
+     * maxresdefault) are never decoded at full resolution.
+     */
+    suspend fun fetchArtworkBytes(url: String, fallbackUrl: String = ""): ByteArray? {
+        return withContext(Dispatchers.IO) {
+            val candidates = listOfNotNull(
+                sanitizeImageUrl(url),
+                sanitizeImageUrl(fallbackUrl),
+            ).distinct()
+
+            for (candidate in candidates) {
+                try {
+                    val request = Request.Builder()
+                        .url(candidate)
+                        .get()
+                        .build()
+
+                    val bytes = UmihiHttpClient.imageClient
+                        .newCall(request)
+                        .execute()
+                        .use { response ->
+                            if (!response.isSuccessful) {
+                                throw IllegalStateException(
+                                    "Failed to fetch artwork. HTTP ${response.code}: ${response.message}"
+                                )
+                            }
+
+                            response.body?.bytes()
+                                ?: throw IllegalStateException("Empty artwork response body")
                         }
 
-                        response.body?.bytes()
-                            ?: throw IllegalStateException("Empty artwork response body")
-                    }
-
-                // Single bounded decode: [cappedTo] samples the image down
-                // before decoding and re-encodes it once, so large thumbnails
-                // (e.g. ~1920×1080 maxresdefault) are never decoded at full
-                // resolution and no intermediate full-size bitmap is kept alive.
-                bytes.cappedTo()
-            } catch (e: Exception) {
-                LogHelper.printe("Failed to fetch artwork: ${e.message}", exception = e)
-                null
+                    // Single bounded decode: [cappedTo] samples the image down
+                    // before decoding and re-encodes it once, so large thumbnails
+                    // are never decoded at full resolution and no intermediate
+                    // full-size bitmap is kept alive.
+                    ImageErrorLog.clear()
+                    return@withContext bytes.cappedTo()
+                } catch (e: Exception) {
+                    LogHelper.printe(
+                        "Failed to fetch artwork from $candidate: ${e.message}",
+                        exception = e
+                    )
+                }
             }
+            null
         }
     }
 

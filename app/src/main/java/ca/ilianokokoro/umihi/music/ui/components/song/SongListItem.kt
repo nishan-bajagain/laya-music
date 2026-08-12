@@ -2,9 +2,7 @@ package ca.ilianokokoro.umihi.music.ui.components.song
 
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
@@ -69,17 +67,13 @@ fun SongListItem(
         modifier = modifier
             .combinedClickable(onClick = onPress, onLongClick = { expanded = true }),
         leadingContent = {
-            Box(
-                modifier = Modifier
-                    .size(60.dp)
-                    .aspectRatio(1f)
-            ) {
-                SquareImage(
-                    localPath = song.thumbnailPath,
-                    remoteUrl = song.thumbnailHref,
-                    modifier = Modifier.matchParentSize()
-                )
-            }
+            SquareImage(
+                localPath = song.thumbnailPath,
+                remoteUrl = song.thumbnailHref,
+                fallbackUrl = song.thumbnailFallbackUrl,
+                contentDescription = song.title,
+                modifier = Modifier.size(60.dp)
+            )
         },
         trailingContent = {
             Row(

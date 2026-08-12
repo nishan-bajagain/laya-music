@@ -4,7 +4,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -53,18 +52,13 @@ fun QueueSongListItem(
             .clip(RoundedCornerShape(18.dp))
             .clickable(onClick = onPress),
         leadingContent = {
-            Box(
-                modifier = Modifier
-                    .size(innerHeight)
-                    .aspectRatio(1f)
-            ) {
-                SquareImage(
-                    localPath = song.thumbnailPath,
-                    remoteUrl = song.thumbnailHref,
-                    modifier = Modifier.matchParentSize()
-                )
-            }
-
+            SquareImage(
+                localPath = song.thumbnailPath,
+                remoteUrl = song.thumbnailHref,
+                fallbackUrl = song.thumbnailFallbackUrl,
+                contentDescription = song.title,
+                modifier = Modifier.size(innerHeight)
+            )
         },
         trailingContent = {
 

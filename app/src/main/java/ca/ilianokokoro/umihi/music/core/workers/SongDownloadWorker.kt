@@ -68,7 +68,8 @@ class SongDownloadWorker(
                 appContext,
                 fullSong.thumbnailHref,
                 song.youtubeId,
-                customBasePath
+                customBasePath,
+                fallbackUrl = fullSong.thumbnailFallbackUrl
             )
 
             // If thumbnail download fails, the DB query (audioFilePath IS NOT NULL AND

@@ -450,12 +450,25 @@ class PlaybackService : MediaLibraryService() {
                                 val song = result.data
                                 val thumbnail = song.thumbnailHref
                                 if (thumbnail.isNotBlank()) {
-                                    val artBytes = UmihiHelper.fetchArtworkBytes(thumbnail)
+                                    val artBytes = UmihiHelper.fetchArtworkBytes(
+                                        thumbnail,
+                                        // Same fallback as everywhere else: if the
+                                        // primary CDN host is unreachable, the
+                                        // notification/now-playing art still resolves
+                                        // via the universal i.ytimg.com thumbnail.
+                                        fallbackUrl = song.thumbnailFallbackUrl
+                                    )
                                     if (artBytes != null) {
                                         updateMediaItemArtwork(
                                             mediaItem,
                                             artBytes,
-                                            song.thumbnailHref.toUri()
+                                            // Sanitize so the URI matches what was
+                                            // actually fetched (the fallback may have
+                                            // been used) and is never scheme-less.
+                                            UmihiHelper.sanitizeImageUrl(song.thumbnailHref)
+                                                .takeIf { it.isNotBlank() }
+                                                ?.toUri()
+                                                ?: Uri.EMPTY
                                         )
                                     }
                                     return@collect

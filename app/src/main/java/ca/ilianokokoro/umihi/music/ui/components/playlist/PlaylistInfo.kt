@@ -79,7 +79,8 @@ fun PlaylistInfo(
         if (!playlist.info.isDownloadedPlaylist) {
             SquareImage(
                 localPath = playlist.info.coverPath,
-                remoteUrl = playlist.info.coverHref
+                remoteUrl = playlist.info.coverHref,
+                contentDescription = playlist.info.title
             )
         } else {
             Icon(

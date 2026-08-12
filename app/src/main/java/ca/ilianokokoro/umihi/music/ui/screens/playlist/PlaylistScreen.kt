@@ -207,6 +207,26 @@ fun PlaylistScreen(
                     }
                     val songs = playlistInfo.songs
 
+                    // Hoisted out of the LazyColumn scope: filtering a long
+                    // playlist on every recomposition (e.g. while typing in the
+                    // search bar) is wasteful. Recomputed only when the song
+                    // list or the query actually changes.
+                    val filteredSongs = remember(songs, uiState.searchQuery) {
+                        if (uiState.searchQuery.isBlank()) {
+                            songs
+                        } else {
+                            songs.filter { song ->
+                                song.title.contains(
+                                    uiState.searchQuery,
+                                    ignoreCase = true
+                                ) || song.artist.contains(
+                                    uiState.searchQuery,
+                                    ignoreCase = true
+                                )
+                            }
+                        }
+                    }
+
                     if (uiState.screenState is ScreenState.Loading || songs.isEmpty()) {
 
                         Spacer(modifier = Modifier.height(paddingValues.calculateTopPadding()))
@@ -266,21 +286,6 @@ fun PlaylistScreen(
                                         onCancelDownload = playlistViewModel::cancelDownload,
                                         playlist = playlistInfo
                                     )
-                                }
-
-                                val filteredSongs = if (uiState.searchQuery.isBlank()) {
-                                    songs
-                                } else {
-                                    songs.filter { song ->
-                                        song.title.contains(
-                                            uiState.searchQuery,
-                                            ignoreCase = true
-                                        ) ||
-                                                song.artist.contains(
-                                                    uiState.searchQuery,
-                                                    ignoreCase = true
-                                                )
-                                    }
                                 }
 
                                 if (uiState.searchQuery.isNotBlank() && filteredSongs.isEmpty()) {

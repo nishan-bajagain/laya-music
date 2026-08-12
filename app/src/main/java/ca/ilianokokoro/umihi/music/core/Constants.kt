@@ -225,6 +225,10 @@ object Constants {
         const val PODCAST_PLAYLIST_ID = "VLSE"
         const val RETRY_DELAY = 1000
         const val YOUTUBE_URL_PREFIX = "https://www.youtube.com/watch?v="
+        // Reliable per-video thumbnail host — i.ytimg.com serves thumbnails to
+        // any client, unlike the signed lh3/yt3 CDN URLs from the API which can
+        // fail on some networks. Used as the fallback poster for every song.
+        const val THUMBNAIL_BASE_URL = "https://i.ytimg.com/vi/"
         const val ORIGIN = "https://music.youtube.com"
         // API key is injected at build time via BuildConfig (never hardcoded in source).
         val API_KEY: String get() = ca.ilianokokoro.umihi.music.BuildConfig.YTM_API_KEY

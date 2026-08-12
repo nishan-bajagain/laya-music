@@ -2,6 +2,7 @@ package ca.ilianokokoro.umihi.music.core.managers
 
 import android.content.ComponentName
 import android.content.Context
+import android.os.Bundle
 import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.media3.common.C
@@ -12,11 +13,13 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import ca.ilianokokoro.umihi.music.R
+import ca.ilianokokoro.umihi.music.core.Constants
 import ca.ilianokokoro.umihi.music.extensions.toSong
 import ca.ilianokokoro.umihi.music.models.PlaybackAudioInfo
 import ca.ilianokokoro.umihi.music.models.Playlist
 import ca.ilianokokoro.umihi.music.models.Song
 import ca.ilianokokoro.umihi.music.services.PlaybackService
+import kotlin.uuid.Uuid
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.CoroutineScope
@@ -181,9 +184,28 @@ object PlayerManager {
     }
 
 
+    /**
+     * The Media3 queue can legitimately hold the same song more than once
+     * (e.g. "add to queue" tapped twice on the same row). Every queue entry
+     * needs its own identity for the queue UI's LazyColumn keys, so stamp a
+     * fresh UID into the extras here instead of reusing
+     * [Song.cachedMediaItemUid] — two entries sharing one uid made
+     * QueueBottomSheet (keyed by song.uid) crash with
+     * "Key ... was already used".
+     */
+    private fun MediaItem.withUniqueQueueUid(): MediaItem {
+        val extras = Bundle(mediaMetadata.extras ?: Bundle())
+        extras.putString(Constants.ExoPlayer.SongMetadata.UID, Uuid.random().toString())
+        return buildUpon()
+            .setMediaMetadata(mediaMetadata.buildUpon().setExtras(extras).build())
+            .build()
+    }
+
+    private fun Song.toQueueMediaItem(): MediaItem = mediaItem.withUniqueQueueUid()
+
     fun playMediaItem(mediaItem: MediaItem) {
         currentController?.run {
-            setMediaItem(mediaItem)
+            setMediaItem(mediaItem.withUniqueQueueUid())
             prepare()
             play()
         }
@@ -192,7 +214,7 @@ object PlayerManager {
 
     fun playPlaylist(playlist: Playlist, index: Int = 0) {
         val controller = currentController ?: return
-        val mediaItems = playlist.mediaItems
+        val mediaItems = playlist.mediaItems.map { it.withUniqueQueueUid() }
 
         if (mediaItems.isEmpty()) {
             return
@@ -228,7 +250,7 @@ object PlayerManager {
 
         currentController?.run {
             setMediaItems(
-                mediaItems,
+                mediaItems.map { it.withUniqueQueueUid() },
                 startIndex.coerceIn(0, mediaItems.lastIndex),
                 startPositionMs
             )
@@ -240,7 +262,7 @@ object PlayerManager {
     fun playSong(song: Song) {
         val controller = currentController ?: return
 
-        controller.setMediaItem(song.mediaItem)
+        controller.setMediaItem(song.toQueueMediaItem())
         controller.prepare()
         controller.play()
     }
@@ -267,7 +289,7 @@ object PlayerManager {
                 .coerceIn(0, controller.mediaItemCount)
         }
 
-        controller.addMediaItem(insertIndex, song.mediaItem)
+        controller.addMediaItem(insertIndex, song.toQueueMediaItem())
 
         context?.let {
             Toast.makeText(
@@ -283,7 +305,7 @@ object PlayerManager {
     fun addToQueue(song: Song, context: Context? = null) {
         val controller = currentController ?: return
 
-        controller.addMediaItem(controller.mediaItemCount, song.mediaItem)
+        controller.addMediaItem(controller.mediaItemCount, song.toQueueMediaItem())
 
         context?.let {
             Toast.makeText(
@@ -315,9 +337,18 @@ object PlayerManager {
     fun getQueue(): List<Song> {
         val controller = currentController ?: return emptyList()
         val queue = mutableListOf<Song>()
+        val usedUids = mutableSetOf<String>()
 
         for (i in 0 until controller.mediaItemCount) {
-            queue.add(controller.getMediaItemAt(i).toSong())
+            var song = controller.getMediaItemAt(i).toSong()
+            // Belt-and-suspenders: even if a MediaItem reached the queue
+            // through a path that did not stamp a unique uid (e.g. Android
+            // Auto browsing), never hand the UI two entries sharing the same
+            // LazyColumn key — that crashes with "Key ... was already used".
+            if (song.uid.isBlank() || !usedUids.add(song.uid)) {
+                song = song.copy(uid = Uuid.random().toString())
+            }
+            queue.add(song)
         }
 
         return queue

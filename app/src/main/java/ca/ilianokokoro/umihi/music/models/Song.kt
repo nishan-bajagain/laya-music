@@ -60,6 +60,15 @@ data class Song(
             extras.putBoolean(Constants.ExoPlayer.SongMetadata.IS_EXPLICIT, isExplicit)
             isLiked?.let { extras.putBoolean(Constants.ExoPlayer.SongMetadata.IS_LIKED, it) }
 
+            // Artwork for Media3 (system notification, Android Auto): sanitize the
+            // remote URL so protocol-relative values the API sometimes returns
+            // ("//lh3.googleusercontent.com/...") never reach DataSourceBitmapLoader
+            // as scheme-less URIs it cannot fetch.
+            val artworkUri = thumbnailPath?.let { it.toUri() }
+                ?: UmihiHelper.sanitizeImageUrl(thumbnailHref)
+                    .takeIf { it.isNotBlank() }
+                    ?.toUri()
+
             return MediaItem.Builder()
                 .setUri(youtubeUrl)
                 .setMediaId(youtubeId)
@@ -70,7 +79,7 @@ data class Song(
                         .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
                         .setIsBrowsable(false)
                         .setIsPlayable(true)
-                        .setArtworkUri((thumbnailPath ?: thumbnailHref).toUri())
+                        .setArtworkUri(artworkUri)
                         .setExtras(extras)
                         .build()
 
@@ -84,6 +93,20 @@ data class Song(
     val downloaded: Boolean
         get() = audioFilePath != null && thumbnailPath != null
 
+    /**
+     * Universal YouTube thumbnail for this song's video ID. Used as a fallback
+     * when the API-provided art URL (usually hosted on lh3.googleusercontent.com
+     * or yt3.ggpht.com) fails to load — i.ytimg.com serves thumbnails reliably
+     * to any client, so posters keep working even when the primary CDN host is
+     * unreachable from the device's network.
+     */
+    val thumbnailFallbackUrl: String
+        get() = if (youtubeId.isNotBlank()) {
+            "${Constants.YoutubeApi.THUMBNAIL_BASE_URL}${youtubeId}/hqdefault.jpg"
+        } else {
+            ""
+        }
+
 
     /**
      * Fetches the remote artwork and decodes it downsampled to ~256x256 — a
@@ -92,7 +115,10 @@ data class Song(
      * per download notification.
      */
     suspend fun getThumbnailBitmap(): Bitmap? {
-        val bytes = UmihiHelper.fetchArtworkBytes(thumbnailHref) ?: return null
+        val bytes = UmihiHelper.fetchArtworkBytes(
+            thumbnailHref,
+            fallbackUrl = thumbnailFallbackUrl
+        ) ?: return null
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null

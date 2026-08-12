@@ -23,6 +23,7 @@ import ca.ilianokokoro.umihi.music.core.ApiResult
 import ca.ilianokokoro.umihi.music.core.Constants
 import ca.ilianokokoro.umihi.music.core.managers.PlayerManager
 import ca.ilianokokoro.umihi.music.core.managers.PlaylistMembership
+import ca.ilianokokoro.umihi.music.core.helpers.AccountInfoHelper
 import ca.ilianokokoro.umihi.music.core.managers.ScreenAwakeManager
 import ca.ilianokokoro.umihi.music.core.managers.UpdateManager
 import ca.ilianokokoro.umihi.music.core.youtube.YoutubeDataExtractor
@@ -77,20 +78,35 @@ class MainActivity : ComponentActivity() {
             showWelcome = welcome
             isAuthenticated = auth
             keepSplashOn = false
-        }
 
-        enableEdgeToEdge()
-        setContent {
-            MusicTheme {
-                NavigationRoot(
-                    modifier = Modifier.fillMaxSize(),
-                    showWelcome = showWelcome,
-                    isAuthenticated = isAuthenticated
-                )
+            // Only set Compose content once the real values are known, so
+            // NavigationRoot's first composition — and therefore its
+            // NavBackStack's initial screen — is correct from the start.
+            // (rememberNavBackStack only reads its initial key on first
+            // composition, so composing with the stale isAuthenticated=false
+            // would pin the app to AuthScreenKey for the whole session.)
+            // The splash screen covers this window, so there's no perceived delay.
+            enableEdgeToEdge()
+            setContent {
+                MusicTheme {
+                    NavigationRoot(
+                        modifier = Modifier.fillMaxSize(),
+                        showWelcome = showWelcome,
+                        isAuthenticated = isAuthenticated
+                    )
+                }
             }
         }
 
         ScreenAwakeManager.registerActivity(this)
+
+        // Self-healing account profile: if the login-time account_menu fetch
+        // failed or stored a blank avatar/name/email, refill them on the next
+        // launch so the profile picture shows without the user having to open
+        // the Profile screen. No-op when logged out or already complete.
+        lifecycleScope.launch {
+            AccountInfoHelper.fetchAndSaveIfMissing(this@MainActivity)
+        }
 
         // Initialise the app-wide playlist membership tracker so every screen can
         // reactively observe which songs belong to at least one local playlist.

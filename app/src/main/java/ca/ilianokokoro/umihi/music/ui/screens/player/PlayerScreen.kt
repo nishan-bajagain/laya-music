@@ -155,6 +155,7 @@ fun PlayerScreen(
             ) {
                 Thumbnail(
                     href = currentSong?.thumbnailHref.toString(),
+                    fallbackUrl = currentSong?.thumbnailFallbackUrl ?: "",
                     modifier = Modifier
                         .fillMaxHeight()
                         .weight(1f)
@@ -226,6 +227,8 @@ fun PlayerScreen(
                 ) {
                     Thumbnail(
                         href = currentSong?.thumbnailHref.toString(),
+                        fallbackUrl = currentSong?.thumbnailFallbackUrl ?: "",
+                        title = currentSong?.title,
                         modifier = Modifier
                             .fillMaxSize()
                             .weight(1f)
@@ -358,6 +361,8 @@ fun PlayerScreen(
 @Composable
 fun Thumbnail(
     href: String,
+    fallbackUrl: String = "",
+    title: String? = null,
     modifier: Modifier = Modifier
 ) {
     BoxWithConstraints(
@@ -370,6 +375,11 @@ fun Thumbnail(
             // Queue songs come from MediaItems and never carry a local thumbnail
             // path, so only the remote URL is available here.
             remoteUrl = href,
+            fallbackUrl = fallbackUrl,
+            contentDescription = title,
+            // Near-fullscreen art: decode at 1024 instead of the 256px list
+            // default so the poster stays sharp instead of pixelated.
+            requestSize = 1024,
             modifier = Modifier.size(size)
         )
     }

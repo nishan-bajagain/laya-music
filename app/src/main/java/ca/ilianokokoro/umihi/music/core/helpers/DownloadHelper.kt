@@ -2,6 +2,7 @@ package ca.ilianokokoro.umihi.music.core.helpers
 
 import android.content.Context
 import ca.ilianokokoro.umihi.music.core.Constants
+import ca.ilianokokoro.umihi.music.core.ImageErrorLog
 import ca.ilianokokoro.umihi.music.core.UmihiHttpClient
 import ca.ilianokokoro.umihi.music.core.helpers.LogHelper.printd
 import ca.ilianokokoro.umihi.music.core.helpers.LogHelper.printe
@@ -18,72 +19,87 @@ object DownloadHelper {
 
     /**
      * Download a thumbnail image. Files land in [customBasePath] when provided,
-     * otherwise in the app's internal files directory.
+     * otherwise in the app's internal files directory. If the primary [imageUrl]
+     * fails (unreachable CDN host, HTTP error, protocol-relative URL), [fallbackUrl]
+     * — usually the universal i.ytimg.com thumbnail — is tried before giving up,
+     * so offline thumbnails keep working even when the API art host is blocked.
      */
     suspend fun downloadImage(
         context: Context,
         imageUrl: String,
         id: String,
-        customBasePath: String? = null
+        customBasePath: String? = null,
+        fallbackUrl: String = ""
     ): File? {
         return withContext(Dispatchers.IO) {
-            try {
-                val imageDir = UmihiHelper.getDownloadDirectory(
-                    context,
-                    Constants.Downloads.THUMBNAILS_FOLDER,
-                    customBasePath
-                )
+            val candidates = listOfNotNull(
+                UmihiHelper.sanitizeImageUrl(imageUrl),
+                UmihiHelper.sanitizeImageUrl(fallbackUrl),
+            ).distinct()
 
-                val imageFile = File(imageDir, "$id.jpg")
+            if (candidates.isEmpty()) {
+                printe(tag = "PlaylistDownloadWorker", message = "Thumbnail URL is empty for $id")
+                return@withContext null
+            }
 
-                if (imageFile.exists()) {
-                    printd("Song Image $id was already downloaded")
-                    return@withContext imageFile
-                }
+            val imageDir = UmihiHelper.getDownloadDirectory(
+                context,
+                Constants.Downloads.THUMBNAILS_FOLDER,
+                customBasePath
+            )
+            val imageFile = File(imageDir, "$id.jpg")
 
-                val tempFile = File(imageDir, "$id.jpg.part")
+            if (imageFile.exists()) {
+                printd("Song Image $id was already downloaded")
+                return@withContext imageFile
+            }
 
-                if (tempFile.exists()) {
-                    tempFile.delete()
-                }
-
-                val request = Request.Builder()
-                    .url(imageUrl)
-                    .get()
-                    .build()
-
-                UmihiHttpClient.client
-                    .newCall(request)
-                    .execute()
-                    .use { response ->
-                        if (!response.isSuccessful) {
-                            throw IOException("HTTP ${response.code}: ${response.message}")
-                        }
-
-                        val body = response.body ?: throw IOException("Empty image response body")
-
-                        body.byteStream().use { input ->
-                            tempFile.outputStream().use { output ->
-                                input.copyTo(output)
-                            }
-                        }
+            for (candidate in candidates) {
+                try {
+                    val tempFile = File(imageDir, "$id.jpg.part")
+                    if (tempFile.exists()) {
+                        tempFile.delete()
                     }
 
-                if (!tempFile.renameTo(imageFile)) {
-                    throw IOException("Failed to rename thumbnail temp file")
-                }
+                    val request = Request.Builder()
+                        .url(candidate)
+                        .get()
+                        .build()
 
-                imageFile
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                printe(
-                    tag = "PlaylistDownloadWorker",
-                    message = "Error Downloading Thumbnail",
-                    exception = e
-                )
-                null
+                    UmihiHttpClient.imageClient
+                        .newCall(request)
+                        .execute()
+                        .use { response ->
+                            if (!response.isSuccessful) {
+                                throw IOException("HTTP ${response.code}: ${response.message}")
+                            }
+
+                            val body = response.body ?: throw IOException("Empty image response body")
+
+                            body.byteStream().use { input ->
+                                tempFile.outputStream().use { output ->
+                                    input.copyTo(output)
+                                }
+                            }
+                        }
+
+                    if (!tempFile.renameTo(imageFile)) {
+                        throw IOException("Failed to rename thumbnail temp file")
+                    }
+
+                    ImageErrorLog.clear()
+                    return@withContext imageFile
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    printe(
+                        tag = "PlaylistDownloadWorker",
+                        message = "Error Downloading Thumbnail from $candidate",
+                        exception = e
+                    )
+                }
             }
+            null
         }
     }
 

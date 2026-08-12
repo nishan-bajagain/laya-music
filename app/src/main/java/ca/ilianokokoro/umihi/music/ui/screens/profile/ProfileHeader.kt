@@ -39,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import ca.ilianokokoro.umihi.music.core.helpers.UmihiHelper
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 
@@ -58,8 +59,11 @@ fun ProfileHeader(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    var avatarRetry by remember(avatarUrl) { mutableIntStateOf(0) }
-    var avatarFailed by remember(avatarUrl) { mutableStateOf(false) }
+    // Google's accountPhoto can be a protocol-relative 96px thumbnail —
+    // normalize before Coil sees it so the avatar loads and isn't pixelated.
+    val safeAvatarUrl = remember(avatarUrl) { UmihiHelper.normalizeGoogleAvatarUrl(avatarUrl) }
+    var avatarRetry by remember(safeAvatarUrl) { mutableIntStateOf(0) }
+    var avatarFailed by remember(safeAvatarUrl) { mutableStateOf(false) }
 
     // Skeleton while a fetch is in flight and the cached fields are still blank —
     // never show an empty hero while the screen is actually loading data.
@@ -99,13 +103,13 @@ fun ProfileHeader(
                     modifier = Modifier.size(96.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                 )
-                if (avatarUrl.isNotBlank() && !avatarFailed) {
-                    val avatarRequest = remember(avatarUrl, avatarRetry) {
+                if (safeAvatarUrl.isNotBlank() && !avatarFailed) {
+                    val avatarRequest = remember(safeAvatarUrl, avatarRetry) {
                         ImageRequest.Builder(context)
                             // The fragment changes Coil's cache key but is not sent
                             // to the avatar server, so a failed first request can
                             // be retried without disabling normal image caching.
-                            .data("$avatarUrl#avatarRetry=$avatarRetry")
+                            .data("$safeAvatarUrl#avatarRetry=$avatarRetry")
                             // 140dp avatar ≈ 420px @3x — bound the decode instead
                             // of loading the raw URL at full resolution.
                             .size(256, 256)
