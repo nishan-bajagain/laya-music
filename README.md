@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/banner.jpg" alt="Laya Music Banner" width="100%">
+  <img src="assets/icon.webp" alt="Laya Music Banner" width="100%">
 
   # Laya Music
 
