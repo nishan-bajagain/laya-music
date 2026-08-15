@@ -1,8 +1,8 @@
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import java.util.Properties
 
-val appVersionName = "v1.0.4"
-val appVersionCode = 10012
+val appVersionName = "v1.0.4.1"
+val appVersionCode = 10013
 
 // ── Load local.properties (not committed to git) ──────────────────────────
 val localProps = Properties().also { props ->
@@ -10,9 +10,41 @@ val localProps = Properties().also { props ->
         ?.inputStream()?.use { props.load(it) }
 }
 
-/** Reads a key from environment variable first, then local.properties fallback. */
+// ── Load .env (gitignored; see .env.example) as an additional fallback ────
+// The template has always said "copy to .env", so make that actually work:
+// KEY=value lines (comments and [section] headers are skipped) are read after
+// real environment variables but before local.properties.
+val envFileProps = Properties().also { props ->
+    rootProject.file(".env").takeIf { it.exists() }?.bufferedReader()?.useLines { lines ->
+        lines.forEach { line ->
+            val trimmed = line.trim()
+            if (
+                trimmed.isNotEmpty() &&
+                !trimmed.startsWith("#") &&
+                !trimmed.startsWith("[")
+            ) {
+                val idx = trimmed.indexOf('=')
+                if (idx > 0) {
+                    val key = trimmed.substring(0, idx).trim()
+                    var value = trimmed.substring(idx + 1).trim()
+                    if (value.startsWith("\"") && value.endsWith("\"")) {
+                        value = value.substring(1, value.length - 1)
+                    }
+                    props.setProperty(key, value)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Reads a key from the real environment first, then the gitignored .env file,
+ * then local.properties. Environment variables still win so CI secrets and
+ * exported shell vars behave exactly as before.
+ */
 fun localOrEnv(propKey: String, envKey: String = propKey.replace('.', '_').uppercase()): String? =
     System.getenv(envKey)?.takeIf { it.isNotBlank() }
+        ?: envFileProps.getProperty(envKey)?.takeIf { it.isNotBlank() }
         ?: localProps.getProperty(propKey)?.takeIf { it.isNotBlank() }
 
 plugins {
@@ -163,6 +195,17 @@ android {
     androidResources {
         @Suppress("UnstableApiUsage")
         generateLocaleConfig = true
+    }
+
+    testOptions {
+        unitTests {
+            // Plain JVM unit tests (no Robolectric) run against the mocked
+            // android.jar, where android.util.Log throws "not mocked". The
+            // app deliberately logs parse failures via LogHelper (debug gated),
+            // so let framework calls return defaults instead of crashing the
+            // very error paths the tests exercise.
+            isReturnDefaultValues = true
+        }
     }
 }
 

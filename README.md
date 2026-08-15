@@ -53,6 +53,12 @@ Laya Music prioritizes a responsive playback experience while retaining a clean,
 | **Extraction**| NewPipeExtractor |
 | **SDK Specs** | Min: API 24 (Android 7.0) / Target: API 35 |
 
+## 📦 Releases & Signing
+
+Releases are cut by pushing a `vX.Y.Z` tag — the workflow builds, verifies the signing certificate, and creates the GitHub Release automatically. See **[RELEASING.md](RELEASING.md)** for the full release procedure, the signing identity, and keystore recovery.
+
+> ⚠️ **v1.0.3 users:** the v1.0.3 APK was accidentally debug-signed; uninstall it before installing v1.0.4 (one-time exception, see the [v1.0.4 release notes](https://github.com/nishan-bajagain/laya-music/releases)).
+
 ## 🚀 Getting Started
 
 ### Prerequisites

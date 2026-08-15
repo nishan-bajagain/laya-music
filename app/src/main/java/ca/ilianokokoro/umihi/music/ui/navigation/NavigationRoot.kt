@@ -1,6 +1,11 @@
 package ca.ilianokokoro.umihi.music.ui.navigation
 
 import android.app.Application
+import android.content.Context
+import android.content.Intent
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -33,6 +38,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.core.net.toUri
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,8 +62,10 @@ import ca.ilianokokoro.umihi.music.R
 import ca.ilianokokoro.umihi.music.core.Constants
 import ca.ilianokokoro.umihi.music.core.ImageErrorLog
 import ca.ilianokokoro.umihi.music.core.helpers.LogHelper.printe
+import ca.ilianokokoro.umihi.music.core.managers.DataBackupManager
 import ca.ilianokokoro.umihi.music.core.managers.UpdateManager
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository
+import ca.ilianokokoro.umihi.music.ui.components.dialog.SignatureMismatchDialog
 import ca.ilianokokoro.umihi.music.ui.components.dialog.UpdateAvailableDialog
 import ca.ilianokokoro.umihi.music.ui.components.dialog.UpdateReadyDialog
 import ca.ilianokokoro.umihi.music.ui.components.miniplayer.MiniPlayerWrapper
@@ -94,10 +102,33 @@ fun NavigationRoot(
     // appear on any screen. Gated by BuildConfig so the store flavor is inert.
     val updateInfo by UpdateManager.availableUpdate.collectAsStateWithLifecycle()
     val readyApk by UpdateManager.readyToInstallApk.collectAsStateWithLifecycle()
+    val signatureMismatchApk by UpdateManager.signatureMismatchApk.collectAsStateWithLifecycle()
     val currentScreen = backStack.last()
     val screenConfig = rememberScreenUiConfig(currentScreen)
 
     var showFullPlayer by remember { mutableStateOf(false) }
+    // State for the guided one-time migration (v1.0.3 debug-key builds):
+    // backing up app data before the required uninstall/reinstall.
+    var backupInProgress by remember { mutableStateOf(false) }
+    val backupLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri ->
+        if (uri != null) {
+            scope.launch {
+                backupInProgress = true
+                val result = DataBackupManager.export(app, uri)
+                backupInProgress = false
+                Toast.makeText(
+                    app,
+                    result.fold(
+                        onSuccess = { app.getString(R.string.backup_success) },
+                        onFailure = { app.getString(R.string.backup_failed) }
+                    ),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
     var bottomBarHeightPixels by remember { mutableIntStateOf(0) }
     val bottomBarHeightDp = with(LocalDensity.current) { bottomBarHeightPixels.toDp() }
     val playerSheetState =
@@ -381,8 +412,42 @@ fun NavigationRoot(
                 onDismiss = UpdateManager::dismissReadyToInstall
             )
         }
+
+        // A downloaded update signed with a different key than the installed
+        // app (the one-time v1.0.3 debug-key situation) — guide instead of
+        // letting Android show a bare "package conflicts" error.
+        signatureMismatchApk?.let {
+            SignatureMismatchDialog(
+                backupInProgress = backupInProgress,
+                onBackup = { backupLauncher.launch("laya-music-backup.zip") },
+                onUninstall = { launchUninstall(app) },
+                onDismiss = UpdateManager::dismissSignatureMismatch
+            )
+        }
     }
 
+}
+
+/**
+ * Opens the system's "Uninstall app" confirmation for Laya Music itself.
+ * Only ever used as the final step of the one-time signature-migration flow
+ * (v1.0.3 debug-key users). If the user cancels, nothing happens.
+ */
+private fun launchUninstall(context: Context) {
+    try {
+        val intent = Intent(
+            Intent.ACTION_UNINSTALL_PACKAGE,
+            "package:${context.packageName}".toUri()
+        ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        printe("Could not launch uninstaller: ${e.message}", exception = e)
+        Toast.makeText(
+            context,
+            context.getString(R.string.uninstall_manual_hint),
+            Toast.LENGTH_LONG
+        ).show()
+    }
 }
 
 

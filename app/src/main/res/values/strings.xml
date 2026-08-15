@@ -204,6 +204,23 @@
     <string name="app_update_name">App Updates</string>
     <string name="app_update_description">Shows progress and status for app updates</string>
     <string name="update_install_permission_needed">Allow Laya to install apps from this source, then try again</string>
+    <!-- Signature-mismatch migration (one-time v1.0.3 debug-key builds) -->
+    <string name="update_signature_mismatch_title">"Update can't be installed directly"</string>
+    <string name="update_signature_mismatch_body">This update was signed with a different key than the version installed on your device. For security, Android cannot replace an app with one from a different certificate, so a one-time uninstall is required.</string>
+    <string name="update_signature_mismatch_steps">1. Tap Back up data to save your playlists, settings and downloads
+2. Tap Uninstall Laya Music
+3. Install the new version from the download or notification, then restore your data from Settings - Data &amp; Storage</string>
+    <string name="uninstall_laya_music">Uninstall Laya Music</string>
+    <string name="uninstall_manual_hint">Could not open the uninstaller. Please uninstall Laya Music from Settings - Apps</string>
+    <string name="backup_data">Back up data</string>
+    <string name="backup_data_subtitle">Save playlists, settings, login and downloads to a file</string>
+    <string name="backup_in_progress">Backing up…</string>
+    <string name="backup_success">Backup saved. After reinstalling, use Restore data from Settings</string>
+    <string name="backup_failed">Backup failed. Please try again</string>
+    <string name="restore_data">Restore data</string>
+    <string name="restore_data_subtitle">Restore from a backup file - the app will restart</string>
+    <string name="restore_success">Data restored - restarting…</string>
+    <string name="restore_failed">Restore failed. The file may be corrupted or from a different app</string>
 
     <!-- Lyrics -->
     <string name="lyrics">Lyrics</string>

@@ -1,6 +1,10 @@
 package ca.ilianokokoro.umihi.music.ui.screens.settings
 
 import android.app.Application
+import android.content.Intent
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,6 +28,8 @@ import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Memory
+import androidx.compose.material.icons.outlined.Restore
+import androidx.compose.material.icons.outlined.SaveAlt
 import androidx.compose.material.icons.outlined.StayCurrentPortrait
 import androidx.compose.material.icons.outlined.SystemUpdate
 import androidx.compose.material3.AlertDialog
@@ -37,9 +43,11 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -49,6 +57,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ca.ilianokokoro.umihi.music.R
 import ca.ilianokokoro.umihi.music.core.Constants
+import ca.ilianokokoro.umihi.music.core.managers.DataBackupManager
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository.PreferenceKeys
 import ca.ilianokokoro.umihi.music.ui.components.ErrorMessage
 import ca.ilianokokoro.umihi.music.ui.components.FadingStatusBarWrapper
@@ -57,6 +66,8 @@ import ca.ilianokokoro.umihi.music.ui.components.dialog.ConfirmDialog
 import ca.ilianokokoro.umihi.music.ui.screens.settings.components.BooleanSettingItem
 import ca.ilianokokoro.umihi.music.ui.screens.settings.components.SettingsItem
 import ca.ilianokokoro.umihi.music.ui.screens.settings.components.SettingsSection
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 
 @Composable
@@ -68,6 +79,70 @@ fun SettingsScreen(
     settingsViewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory(application))
 ) {
     val uiState = settingsViewModel.uiState.collectAsStateWithLifecycle().value
+
+    // Manual data backup/restore — the user's own copy of playlists, settings
+    // and downloads (also the way v1.0.3 debug-key users keep their data
+    // across the one-time uninstall/reinstall migration).
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var backupInProgress by remember { mutableStateOf(false) }
+    var restoreInProgress by remember { mutableStateOf(false) }
+
+    val backupLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri ->
+        if (uri != null) {
+            scope.launch {
+                backupInProgress = true
+                val result = DataBackupManager.export(application, uri)
+                backupInProgress = false
+                Toast.makeText(
+                    context,
+                    result.fold(
+                        onSuccess = { context.getString(R.string.backup_success) },
+                        onFailure = { context.getString(R.string.backup_failed) }
+                    ),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
+
+    val restoreLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            scope.launch {
+                restoreInProgress = true
+                val result = DataBackupManager.import(application, uri)
+                restoreInProgress = false
+                Toast.makeText(
+                    context,
+                    result.fold(
+                        onSuccess = { context.getString(R.string.restore_success) },
+                        onFailure = { context.getString(R.string.restore_failed) }
+                    ),
+                    Toast.LENGTH_LONG
+                ).show()
+                if (result.isSuccess) {
+                    // Restart so Room/DataStore reopen the restored files.
+                    delay(500)
+                    val launchIntent = context.packageManager
+                        .getLaunchIntentForPackage(context.packageName)
+                        ?.apply {
+                            addFlags(
+                                Intent.FLAG_ACTIVITY_NEW_TASK or
+                                    Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            )
+                        }
+                    if (launchIntent != null) {
+                        context.startActivity(launchIntent)
+                        Runtime.getRuntime().exit(0)
+                    }
+                }
+            }
+        }
+    }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -214,6 +289,32 @@ fun SettingsScreen(
                                 subtitle = stringResource(R.string.clear_data_message),
                                 leadingIcon = Icons.Outlined.Delete,
                                 onClick = { settingsViewModel.updateShowDownloadDeleteConfirm(true) }
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            SettingsItem(
+                                title = stringResource(R.string.backup_data),
+                                subtitle = stringResource(R.string.backup_data_subtitle),
+                                leadingIcon = Icons.Outlined.SaveAlt,
+                                onClick = {
+                                    if (!backupInProgress && !restoreInProgress) {
+                                        backupLauncher.launch("laya-music-backup.zip")
+                                    }
+                                }
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            SettingsItem(
+                                title = stringResource(R.string.restore_data),
+                                subtitle = stringResource(R.string.restore_data_subtitle),
+                                leadingIcon = Icons.Outlined.Restore,
+                                onClick = {
+                                    if (!backupInProgress && !restoreInProgress) {
+                                        restoreLauncher.launch(
+                                            arrayOf("application/zip", "application/octet-stream")
+                                        )
+                                    }
+                                }
                             )
                         }
 

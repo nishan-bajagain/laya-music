@@ -1,13 +1,18 @@
 name: Build and Release
 
+# Single deterministic release path: pushing a `v*` tag builds the APK and
+# creates (or updates) a GitHub Release under that exact tag. There is no
+# `release: published` trigger, so a release can never be published under a
+# hand-typed tag (v1.0.2 was tagged `opensource`, v1.0.3 was tagged `bug`,
+# and another release was tagged `laya`) — the in-app updater only
+# understands `vX.Y.Z` tags, and a mismatched tag silently breaks the
+# update check. With this workflow, the tag IS the version, by construction.
 on:
   push:
     branches:
       - main
     tags:
       - 'v*'
-  release:
-    types: [published]
 
 permissions:
   contents: write
@@ -24,6 +29,15 @@ jobs:
       KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
       # ── YTM API key (set in GitHub → Settings → Secrets) ────────────────
       YTM_API_KEY: ${{ secrets.YTM_API_KEY }}
+      # SHA-256 fingerprint of the app's release signing certificate
+      # (CN=Laya Music, C=CA). This is PUBLIC information — it ships inside
+      # every APK — and it is the identity every installed copy must carry.
+      # Every release since v1.0.2 must be signed with this one key. The
+      # Verify signing certificate step below FAILS the build if the produced
+      # APK was signed by anything else, so a future key swap has to be a
+      # deliberate, documented act instead of a silent CI change that breaks
+      # in-place updates for every existing user.
+      EXPECTED_SIGNING_FINGERPRINT: "0b4c236a30842911b3f3f394aed3d69ad33c63d5897acc4b3bf5232064b01a21"
 
     steps:
       - name: Checkout Repository
@@ -61,7 +75,9 @@ jobs:
         # secret is passed through env — never echoed into the logs — and the
         # step fails fast when the secret is missing or decodes empty, so a
         # misconfigured release build can't silently fall back to the debug
-        # key. The keystore itself is removed again after the build.
+        # key (that silent fallback is what shipped the debug-key-signed
+        # v1.0.3 APK and caused the v1.0.3 → v1.0.4 signature mismatch).
+        # The keystore is removed from the workspace again after the build.
         shell: bash
         env:
           RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
@@ -83,6 +99,53 @@ jobs:
         # The Gradle fail-fast signing check (app/build.gradle.kts) aborts here
         # if the keystore or any signing secret is missing/misconfigured.
         run: ./gradlew assembleGithubRelease --stacktrace --no-daemon
+
+      - name: Verify signing certificate
+        # Auditability + enforcement of the signing identity:
+        #   1. prints the signing certificate's SHA-256 fingerprint (public
+        #      info only — never the keystore file or passwords) so every
+        #      release's signing identity is visible in this workflow log;
+        #   2. fails the build if the APK was signed with anything other than
+        #      the pinned key — catching a swapped keystore secret, a stale
+        #      artifact, or a silent debug-key fallback the moment it happens
+        #      instead of days later as a user-facing install failure.
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk_path=$(find app/build/outputs/apk/github/release -name "*.apk" | head -n 1)
+          test -n "$apk_path" || { echo "::error::No APK found in app/build/outputs/apk/github/release"; exit 1; }
+
+          apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner 2>/dev/null | sort -V | tail -1)
+          test -n "$apksigner" || { echo "::error::apksigner not found in build-tools"; exit 1; }
+
+          # Fingerprint of the certificate that actually signed the APK
+          # (APK Signature Scheme v2/v3 block — keytool cannot read it).
+          apk_fp=$("$apksigner" verify --print-certs "$apk_path" \
+            | grep -iE "SHA-256 digest" | head -n 1 | sed -E 's/.*digest:[[:space:]]*//' | tr -d '\r')
+
+          # Fingerprint of the certificate inside the keystore we signed
+          # with. -storepass:env keeps the password out of the process list
+          # and the logs; a wrong password or wrong alias fails here.
+          keytool -exportcert -keystore laya-release.jks -alias "$KEY_ALIAS" \
+            -storepass:env KEYSTORE_PASSWORD -rfc -file /tmp/signing-cert.pem
+          ks_fp=$(openssl x509 -in /tmp/signing-cert.pem -noout -fingerprint -sha256 \
+            | sed -E 's/.*=//' | tr -d ':' | tr 'A-F' 'a-f')
+
+          apk_fp_norm=$(printf '%s' "$apk_fp" | tr -d ':' | tr 'A-F' 'a-f')
+
+          echo "APK signing certificate SHA-256: $apk_fp"
+          echo "Keystore certificate SHA-256:    $ks_fp"
+          echo "Expected (pinned):               $EXPECTED_SIGNING_FINGERPRINT"
+
+          test "$apk_fp_norm" = "$ks_fp" || {
+            echo "::error::The APK certificate does not match the keystore certificate — stale artifact or wrong keystore file."
+            exit 1
+          }
+          test "$apk_fp_norm" = "$EXPECTED_SIGNING_FINGERPRINT" || {
+            echo "::error::The APK was signed with an unexpected certificate. In-place updates will fail for every existing user. If you deliberately rotated the signing key, update EXPECTED_SIGNING_FINGERPRINT in this workflow and document the migration."
+            exit 1
+          }
+          echo "✔ APK is signed with the authoritative release key ($EXPECTED_SIGNING_FINGERPRINT)"
 
       - name: Remove keystore from workspace
         # Never persist the keystore: delete it from the workspace right after
@@ -109,7 +172,13 @@ jobs:
           path: build-artifacts/laya-music-release.apk
 
       - name: Create GitHub Release and Upload APK
-        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'release'
+        # Runs only on `v*` tag pushes — the single, deterministic release
+        # path. The release is created under the pushed tag, so the tag is
+        # exactly the version by construction and the in-app updater (which
+        # reads tag_name from /releases/latest) works. The release body
+        # comes from RELEASE_NOTES.md — edit that file before tagging.
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           files: build-artifacts/laya-music-release.apk
+          body_path: RELEASE_NOTES.md

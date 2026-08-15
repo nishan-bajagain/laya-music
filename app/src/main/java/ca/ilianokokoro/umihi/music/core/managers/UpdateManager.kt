@@ -87,6 +87,16 @@ object UpdateManager {
     /** Set when the APK download finished while the app is foregrounded. */
     val readyToInstallApk: StateFlow<File?> = _readyToInstallApk.asStateFlow()
 
+    private val _signatureMismatchApk = MutableStateFlow<File?>(null)
+
+    /**
+     * Set when the user tries to install a downloaded APK whose signing
+     * certificate differs from the installed app's — Android would reject it
+     * with a bare "package conflicts" error. The UI shows a guided migration
+     * (back up data → uninstall → reinstall) instead.
+     */
+    val signatureMismatchApk: StateFlow<File?> = _signatureMismatchApk.asStateFlow()
+
     /**
      * Check GitHub for a newer release.
      *
@@ -406,6 +416,25 @@ object UpdateManager {
     }
 
     fun installUpdate(context: Context, apkFile: File) {
+        // Never fire the raw install intent when the update was signed with a
+        // different certificate than the installed app — Android would reject
+        // it and the user would see the bare "App not installed as package
+        // conflicts" error with no explanation. Surface the guided migration
+        // flow instead. If the certificates can't be read, let the system
+        // decide rather than showing a wrong warning.
+        when (SigningUtils.signaturesMatch(context, apkFile)) {
+            false -> {
+                LogHelper.printe(
+                    "Update install blocked: downloaded APK signing certificate " +
+                        "does not match installed app — guiding user through migration"
+                )
+                _signatureMismatchApk.value = apkFile
+                return
+            }
+
+            true, null -> { /* proceed with the normal install */ }
+        }
+
         // API 26+ requires the "install unknown apps" runtime permission; below
         // that the install intent works without it, so skip the check.
         if (
@@ -436,5 +465,10 @@ object UpdateManager {
     /** Close the "ready to install" prompt (the notification remains available). */
     fun dismissReadyToInstall() {
         _readyToInstallApk.value = null
+    }
+
+    /** Close the signature-mismatch migration dialog (the user may come back to it). */
+    fun dismissSignatureMismatch() {
+        _signatureMismatchApk.value = null
     }
 }

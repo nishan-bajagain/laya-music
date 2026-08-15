@@ -3,6 +3,7 @@ package ca.ilianokokoro.umihi.music.core.managers
 import android.app.NotificationChannel
 import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import androidx.annotation.StringRes
 import androidx.core.app.NotificationCompat
@@ -285,11 +286,23 @@ object NotificationManager {
         apkFile: File,
         version: String
     ) {
-        // Tap the notification to jump straight into the install screen.
+        // Tap the notification to jump straight into the install screen — but
+        // only when the update carries the same signing certificate as the
+        // installed app. Otherwise Android would show a bare "package
+        // conflicts" error; open the app so the guided migration dialog
+        // appears instead.
+        val canInstallInPlace = SigningUtils.signaturesMatch(context, apkFile) != false
+        val contentIntent = if (canInstallInPlace) {
+            UpdateManager.buildInstallIntent(context, apkFile)
+        } else {
+            context.packageManager.getLaunchIntentForPackage(context.packageName)
+                ?.apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
+                ?: UpdateManager.buildInstallIntent(context, apkFile)
+        }
         val installPendingIntent = PendingIntent.getActivity(
             context,
             UPDATE_INSTALL_REQUEST_CODE,
-            UpdateManager.buildInstallIntent(context, apkFile),
+            contentIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 

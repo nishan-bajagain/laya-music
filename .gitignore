@@ -58,6 +58,7 @@ tmp/
 .cache/
 
 # ─── Tooling / caches
+.freebuff/
 .gradle/
 build-artifacts/
 
