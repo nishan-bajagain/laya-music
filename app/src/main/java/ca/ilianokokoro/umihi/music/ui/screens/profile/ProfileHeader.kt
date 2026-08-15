@@ -23,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -41,6 +42,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import ca.ilianokokoro.umihi.music.core.helpers.UmihiHelper
 import coil3.compose.AsyncImage
+import kotlinx.coroutines.delay
 import coil3.request.ImageRequest
 
 /**
@@ -63,7 +65,19 @@ fun ProfileHeader(
     // normalize before Coil sees it so the avatar loads and isn't pixelated.
     val safeAvatarUrl = remember(avatarUrl) { UmihiHelper.normalizeGoogleAvatarUrl(avatarUrl) }
     var avatarRetry by remember(safeAvatarUrl) { mutableIntStateOf(0) }
+    // A failed load must not kill the avatar for the rest of the session: a
+    // single transient failure (cold network, CDN hiccup, decode glitch) used
+    // to latch the placeholder forever. Now the failed state auto-resets after
+    // a short delay, so Coil retries periodically until the image actually
+    // loads — while a genuinely dead URL still degrades to the placeholder
+    // between attempts instead of spamming requests.
     var avatarFailed by remember(safeAvatarUrl) { mutableStateOf(false) }
+    LaunchedEffect(safeAvatarUrl, avatarFailed) {
+        if (avatarFailed) {
+            delay(10_000)
+            avatarFailed = false
+        }
+    }
 
     // Skeleton while a fetch is in flight and the cached fields are still blank —
     // never show an empty hero while the screen is actually loading data.

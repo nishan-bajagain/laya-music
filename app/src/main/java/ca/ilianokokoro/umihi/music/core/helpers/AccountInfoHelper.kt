@@ -69,7 +69,17 @@ object AccountInfoHelper {
             // code returned early on a missing actions array, which made the
             // root-level header fallback unreachable.
             val headerRenderer = findActiveAccountHeader(root)
-                ?: return Triple("", "", "")
+            if (headerRenderer == null) {
+                // Debug-only: the account_menu response no longer carries the
+                // header in either known location. Log the response's top-level
+                // keys so the next debug run reveals the new structure without
+                // dumping the whole (account-identifying) body.
+                printd(
+                    "AccountInfoHelper: activeAccountHeaderRenderer not found; " +
+                        "rootKeys=${root.keys}"
+                )
+                return Triple("", "", "")
+            }
 
             val name = headerRenderer["accountName"].textFromRuns() ?: ""
             val email = headerRenderer["email"].textFromRuns() ?: ""
@@ -85,6 +95,7 @@ object AccountInfoHelper {
                 // release builds and can never reach crash reports.
                 printd(
                     "AccountInfoHelper: avatar URL not found; " +
+                        "headerKeys=${headerRenderer.keys} " +
                         "accountPhoto=${headerRenderer["accountPhoto"]}"
                 )
             }
