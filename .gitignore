@@ -1,18 +1,27 @@
-# ─── Gradle ────────────────────────────────────────────────────────────────
+# ─── Gradle / Build artifacts
 .gradle/
-build/
+/build/
 **/build/
 !gradle/wrapper/gradle-wrapper.jar
 
-# ─── Local configuration (NEVER commit) ────────────────────────────────────
+# Gradle wrapper
+gradle/wrapper/gradle-wrapper.properties
+
+# ─── Replit (never upload config / tooling)
+.replit
+replit.nix
+replit.md
+
+# ─── Local configuration (NEVER commit)
 local.properties
 *.jks
 *.keystore
 .env
-.env.local
-.env.*.local
+.env.*
+# keep template tracked
+!.env.example
 
-# ─── Android Studio / IntelliJ IDEA ────────────────────────────────────────
+# ─── Android Studio / IntelliJ IDEA
 *.iml
 .idea/
 *.ipr
@@ -21,22 +30,62 @@ captures/
 .externalNativeBuild/
 .cxx/
 
-# ─── OS / editor cruft ─────────────────────────────────────────────────────
+# ─── VS Code
+.vscode/
+
+# ─── OS / editor cruft
 .DS_Store
 Thumbs.db
+desktop.ini
 *.swp
 *~
 
-# ─── Generated / output ────────────────────────────────────────────────────
+# ─── Generated / output
 out/
 gen/
 release/
 
-# ─── Kotlin / Java ─────────────────────────────────────────────────────────
+# ─── Kotlin / Java
 *.class
 *.jar
+*.war
+*.ear
 !gradle/wrapper/gradle-wrapper.jar
 
-# ─── Logs & temp ───────────────────────────────────────────────────────────
+# ─── Logs & temp
 *.log
 tmp/
+.cache/
+
+# ─── Tooling / caches
+.gradle/
+build-artifacts/
+
+# Node
+node_modules/
+
+# Misc
+*.keystore
+*.properties
+
+# Ignore IntelliJ project files
+.idea/
+
+# Ignore JetBrains caches
+/.idea/
+
+# Ignore macOS and Windows metadata
+.DS_Store
+Thumbs.db
+
+# Ignore Replit specific files
+.replit
+repl.*
+
+# Ignore environment files
+.env
+.env.*
+
+# Ignore temporary files
+*.tmp
+*.temp
