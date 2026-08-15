@@ -81,8 +81,8 @@ fun AboutScreen(
 
     val versionName = try {
         context.packageManager.getPackageInfo(context.packageName, 0).versionName
-            ?: "v1.0.3"
-    } catch (_: Exception) { "v1.0.3" }
+            ?: "v1.0.4"
+    } catch (_: Exception) { "v1.0.4" }
 
     Scaffold(
         topBar = {

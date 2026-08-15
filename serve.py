@@ -2,8 +2,8 @@ import http.server
 import os
 import urllib.parse
 
-APK_PATH = "release/laya-v1.0.2.apk"
-APK_NAME = "laya-v1.0.2.apk"
+APK_PATH = "release/laya-v1.0.4.apk"
+APK_NAME = "laya-v1.0.4.apk"
 
 HTML = """<!DOCTYPE html>
 <html lang="en">
@@ -94,7 +94,7 @@ HTML = """<!DOCTYPE html>
 <div class="card">
   <div class="icon">🎵</div>
   <h1>Laya Music</h1>
-  <div class="version">v1.0.2 · Release Build</div>
+  <div class="version">v1.0.4 · Release Build</div>
   <div class="meta">
     <div class="badge">Size <span>5.9 MB</span></div>
     <div class="badge">minSDK <span>24</span></div>

@@ -289,8 +289,12 @@ fun PlayerScreen(
         }
     }
 
-    // Bottom sheets
-    if (uiState.isSpeedSelectorShown) {
+    // Bottom sheets. LyricsScreen owns every sheet driven by the shared
+    // PlayerViewModel visibility flags while lyrics is presented: keeping this
+    // host active underneath the lyrics modal would mount a second
+    // ModalBottomSheet on the same flag and duplicate the sheet (the same
+    // class of bug the queue sheet below already guards against).
+    if (uiState.isSpeedSelectorShown && !showLyrics) {
         SpeedSelectorBottomSheet(
             changeVisibility = playerViewModel::setSpeedSelectorVisibility,
             currentSpeed = uiState.playbackSpeed,
@@ -309,7 +313,10 @@ fun PlayerScreen(
         )
     }
 
-    if (uiState.isSleepTimerModalShown) {
+    // Same ownership rule as the queue and speed sheets: LyricsScreen renders
+    // the sleep-timer sheet while lyrics is open, so this host must not mount
+    // a second instance on the same shared visibility flag.
+    if (uiState.isSleepTimerModalShown && !showLyrics) {
         SleepTimerBottomSheet(
             changeVisibility = playerViewModel::setSleepTimerSheetVisibility,
             activeRemainingSeconds = uiState.sleepTimerRemainingSeconds,

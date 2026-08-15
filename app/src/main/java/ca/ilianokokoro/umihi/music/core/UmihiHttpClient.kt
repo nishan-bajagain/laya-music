@@ -40,12 +40,10 @@ object UmihiHttpClient {
     /**
      * Browser identity for artwork fetches. Google's image CDNs
      * (i.ytimg.com, lh3.googleusercontent.com, yt3.ggpht.com) reject requests
-     * carrying OkHttp's default `okhttp/x.y.z` User-Agent — and sometimes
-     * requests without a music.youtube.com referer — with HTTP 403, which is
-     * why every poster in the app was blank while the YouTube API calls
+     * carrying OkHttp's default `okhttp/x.y.z` User-Agent with HTTP 403, which
+     * is why every poster in the app was blank while the YouTube API calls
      * (which send browser headers via YoutubeAuthHelper) succeeded. Sending a
-     * browser UA + referer on image requests only is harmless and unblocks
-     * the CDNs.
+     * browser UA on image requests only is harmless and unblocks the CDNs.
      */
     private const val BROWSER_USER_AGENT =
         "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
@@ -71,13 +69,23 @@ object UmihiHttpClient {
     val imageClient: OkHttpClient by lazy {
         client.newBuilder()
             .addInterceptor { chain -> // browser identity
-                chain.proceed(
-                    chain.request().newBuilder()
-                        .header("User-Agent", BROWSER_USER_AGENT)
-                        .header("Referer", "https://music.youtube.com/")
-                        .header("Origin", "https://music.youtube.com")
-                        .build()
-                )
+                val request = chain.request()
+                val builder = request.newBuilder()
+                    .header("User-Agent", BROWSER_USER_AGENT)
+                // The music.youtube.com Referer/Origin are only attached to
+                // YouTube's own thumbnail CDNs (i.ytimg.com, yt3.ggpht.com),
+                // where they were added to stop 403s. Google's account-photo
+                // CDN (lh3.googleusercontent.com) rejects some requests
+                // carrying that cross-site Origin/Referer with a 403/400 — the
+                // profile avatar was the victim because, unlike song artwork,
+                // it has no i.ytimg.com fallback. The avatar must go out
+                // without those headers; the browser UA (harmless everywhere)
+                // stays on for every host.
+                if (isYouTubeImageCdn(request.url.host)) {
+                    builder.header("Referer", "https://music.youtube.com/")
+                    builder.header("Origin", "https://music.youtube.com")
+                }
+                chain.proceed(builder.build())
             }
             .addInterceptor { chain -> // failure capture
                 val request = chain.request()
@@ -109,3 +117,15 @@ object UmihiHttpClient {
             .build()
     }
 }
+
+/**
+ * Whether an image request to [host] should carry the music.youtube.com
+ * Referer/Origin headers. True only for YouTube's own image CDNs
+ * (i.ytimg.com, yt3.ggpht.com and their siblings); false for Google's
+ * account-photo CDN (lh3.googleusercontent.com) and every other host, so the
+ * profile avatar — which has no i.ytimg.com fallback — is never sent with the
+ * cross-site Origin/Referer that can get it 403'd. Extracted as a pure
+ * function so the header policy is unit-testable.
+ */
+internal fun isYouTubeImageCdn(host: String): Boolean =
+    host.endsWith(".ytimg.com") || host.endsWith(".ggpht.com")

@@ -1,8 +1,8 @@
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import java.util.Properties
 
-val appVersionName = "v1.0.3"
-val appVersionCode = 10011
+val appVersionName = "v1.0.4"
+val appVersionCode = 10012
 
 // ── Load local.properties (not committed to git) ──────────────────────────
 val localProps = Properties().also { props ->
@@ -52,26 +52,50 @@ android {
     }
 
     // ── Signing ───────────────────────────────────────────────────────────────
-    // For local builds: values are read from local.properties (gitignored).
-    // For CI (GitHub Actions): set KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
-    //   as repository secrets. The workflow passes them as env vars to Gradle.
-    // If any required value is absent, release falls back to the standard local
-    // debug key so Replit still produces an installable APK. A real release
-    // keystore always takes precedence when its values are configured.
+    // Credentials are read from environment variables first (GitHub Actions
+    // secrets), then local.properties (gitignored) for local dev. Release
+    // builds REQUIRE the real keystore: there is no debug-key fallback, so a
+    // missing value fails the build instead of silently producing a
+    // debug-key-signed APK whose signature conflicts with the published
+    // v1.0.2+ releases and breaks in-place updates.
     val ksFile    = file("$rootDir/laya-release.jks")
     val ksPassword = localOrEnv("keystore.password", "KEYSTORE_PASSWORD")
     val ksAlias    = localOrEnv("key.alias", "KEY_ALIAS")
     val ksKeyPass  = localOrEnv("key.password", "KEY_PASSWORD")
-    val canSign    = ksFile.exists() && ksPassword != null && ksAlias != null && ksKeyPass != null
 
-    if (canSign) {
-        signingConfigs {
-            create("release") {
-                storeFile     = ksFile
-                storePassword = ksPassword
-                keyAlias      = ksAlias
-                keyPassword   = ksKeyPass
+    val missingSigningValues = buildList {
+        if (ksPassword == null) add("KEYSTORE_PASSWORD")
+        if (ksAlias == null) add("KEY_ALIAS")
+        if (ksKeyPass == null) add("KEY_PASSWORD")
+        if (!ksFile.exists()) add("keystore file at $ksFile")
+    }
+
+    // Fail fast on release builds only. Scoped to the task graph so debug
+    // builds and unit tests still run on machines that don't hold the release
+    // keystore, while any release assemble/bundle/package/install aborts with
+    // the exact missing value(s) named.
+    if (missingSigningValues.isNotEmpty()) {
+        val missingDetail = missingSigningValues.joinToString(", ")
+        gradle.taskGraph.whenReady {
+            if (allTasks.any { task ->
+                    task.name.contains("Release") &&
+                    (task.name.startsWith("assemble") ||
+                        task.name.startsWith("bundle") ||
+                        task.name.startsWith("package") ||
+                        task.name.startsWith("install"))
+                }
+            ) {
+                error("Release signing config missing: $missingDetail")
             }
+        }
+    }
+
+    signingConfigs {
+        create("release") {
+            storeFile     = ksFile
+            storePassword = ksPassword
+            keyAlias      = ksAlias
+            keyPassword   = ksKeyPass
         }
     }
 
@@ -84,11 +108,9 @@ android {
             // indistinguishable "no lyrics found" screen.
             isMinifyEnabled = false
             isShrinkResources = false
-            signingConfig = if (canSign) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
-            }
+            // Always the real keystore — the fail-fast check above guarantees
+            // it is fully configured by the time a release build runs.
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
