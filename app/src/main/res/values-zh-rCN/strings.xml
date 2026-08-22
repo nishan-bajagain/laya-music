@@ -28,7 +28,6 @@
     <string name="download">下载</string>
     <string name="open_settings">打开设置</string>
     <string name="more">更多</string>
-    <string name="join_discord_server">加入 Discord 服务器</string>
     <string name="play_next">播放下一个</string>
     <string name="add_to_queue">添加到队列</string>
     <string name="retry">重试</string>
@@ -36,10 +35,7 @@
     <string name="added_queue_toast">添加歌曲到队列</string>
     <string name="playing_now">现在播放</string>
     <string name="up_to_date_message">此应用已经是最新版本！</string>
-    <string name="update_check_failed">检查更新失败</string>
-    <string name="github_rate_limit_retry">GitHub API 速率限制，请在 %1$s 重试</string>
     <string name="minutes">%1$d 分钟</string>
-    <string name="seconds">%1$d 秒</string>
     <string name="update_available">可用更新</string>
     <string name="new_version_body">有新版本可用。(%1$s)</string>
     <string name="log_out">登出</string>
@@ -47,12 +43,8 @@
     <string name="app_info">应用信息</string>
     <string name="check_for_updates">检查更新</string>
     <string name="delete_downloads">删除所有下载</string>
-    <string name="clear_login_info">清除登录信息</string>
-    <string name="logged_in_message">您已登录到您的 YouTube 帐户</string>
-    <string name="logged_out_message">您目前没有登录</string>
     <string name="account">账户</string>
     <string name="clear_data_message">从此设备中删除所有已下载的歌曲和缓存的数据</string>
-    <string name="clear_login_message">清除所有已保存的帐户和登录信息</string>
     <string name="login_info_cleared">登录信息已清除</string>
     <string name="downloads_cleared">下载已清除</string>
     <string name="invalid_navkey">无效的 NavKey : %1$s</string>
@@ -60,10 +52,6 @@
     <string name="cancel">取消</string>
     <string name="remove_local_playlist">删除本地播放列表</string>
     <string name="remove_local_confirm_text">删除已下载的播放列表吗？播放列表将继续在线提供。</string>
-    <string name="ignore">忽略</string>
-    <string name="change_update_channel">更改更新频道</string>
-    <string name="current_update_channel_body">当前更新频道: %1$s</string>
-    <string name="beta_update_available">测试版更新可用</string>
     <string name="home">首页</string>
     <string name="search">搜索</string>
     <string name="no_results">无结果</string>
@@ -98,11 +86,9 @@
     <string name="delete_playlist">删除播放列表</string>
     <string name="delete_playlist_text">您确定要从您的 YouTube 帐户中删除这个播放列表 ? 这个操作不能被撤销。</string>
     <string name="check_update_setting_description">检查来自 GitHub 的新更新</string>
-    <string name="updates">更新</string>
     <string name="current_version">当前版本</string>
     <string name="visibility">可见性</string>
     <string name="auto_update_title">自动更新检查</string>
-    <string name="auto_update_subtitle">启用自动检查应用程序启动时的更新</string>
     <string name="sleep_timer">睡眠计时器</string>
     <string name="sleep_timer_active">睡眠计时器激活</string>
     <string name="sleep_timer_remaining">剩余</string>

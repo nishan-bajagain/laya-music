@@ -28,7 +28,6 @@
     <string name="download">Nedlasting</string>
     <string name="open_settings">Åpne Innstillinger</string>
     <string name="more">mer</string>
-    <string name="join_discord_server">Bli med på Discord-serveren</string>
     <string name="play_next">Spill neste</string>
     <string name="add_to_queue">Legg til i køen</string>
     <string name="retry">Prøv igjen</string>
@@ -36,10 +35,7 @@
     <string name="added_queue_toast">Lagt til sang i køen</string>
     <string name="playing_now">Spiller nå</string>
     <string name="up_to_date_message">Appen er oppdatert!</string>
-    <string name="update_check_failed">Kunne ikke se etter oppdateringer</string>
-    <string name="github_rate_limit_retry">GitHub API-rate begrenset. Prøv igjen i %1$s.</string>
     <string name="minutes">%1$d minutter</string>
-    <string name="seconds">%1$d sekunder</string>
     <string name="update_available">Oppdatering tilgjengelig</string>
     <string name="new_version_body">En ny versjon er tilgjengelig. (%1$s)</string>
     <string name="log_out">Logg ut</string>
@@ -47,12 +43,8 @@
     <string name="app_info">App info</string>
     <string name="check_for_updates">Se etter oppdateringer</string>
     <string name="delete_downloads">Slett alle nedlastinger</string>
-    <string name="clear_login_info">Tøm innloggingsinfo</string>
-    <string name="logged_in_message">Du er logget på din YouTube-konto</string>
-    <string name="logged_out_message">Du er ikke innlogget nå</string>
     <string name="account">Konto</string>
     <string name="clear_data_message">Fjern alle nedlastede sanger og mellomlagrede data fra denne enheten</string>
-    <string name="clear_login_message">Fjerner alle de lagrede kontoene og innloggings informasjonen</string>
     <string name="login_info_cleared">Innloggingsinformasjon fjernet</string>
     <string name="downloads_cleared">Nedlastinger fjernet</string>
     <string name="invalid_navkey">Ugyldig marinnøkkel : %1$s</string>
@@ -60,10 +52,6 @@
     <string name="cancel">Avbryt</string>
     <string name="remove_local_playlist">Fjern lokal spilleliste</string>
     <string name="remove_local_confirm_text">Slett de nedlastede filene for denne spillelisten? Spillelisten vil forbli tilgjengelig på nettet.</string>
-    <string name="ignore">Ignorer</string>
-    <string name="change_update_channel">Endre oppdateringskanalen</string>
-    <string name="current_update_channel_body">Gjeldende oppdateringskanal: %1$s</string>
-    <string name="beta_update_available">Betaoppdatering tilgjengelig</string>
     <string name="home">Hjem</string>
     <string name="search">Søk</string>
     <string name="no_results">Ingen treff</string>
@@ -98,11 +86,9 @@
     <string name="delete_playlist">Slett spilleliste</string>
     <string name="delete_playlist_text">Er du sikker på at du vil slette denne spillelisten fra YouTube-kontoen din? Denne handlingen kan ikke angres.</string>
     <string name="check_update_setting_description">Sjekker etter nye oppdateringer fra GitHub</string>
-    <string name="updates">Oppdateringer</string>
     <string name="current_version">Gjeldende versjon</string>
     <string name="visibility">Synlighet</string>
     <string name="auto_update_title">Automatisk oppdateringskontroll</string>
-    <string name="auto_update_subtitle">Aktiverer sjekk for oppdatering automatisk ved oppstart av app</string>
     <string name="sleep_timer">Sleep timer</string>
     <string name="sleep_timer_active">Sleep Timer Aktiv</string>
     <string name="sleep_timer_remaining">gjenstår</string>

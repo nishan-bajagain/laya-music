@@ -28,7 +28,6 @@
     <string name="download">Downwoad</string>
     <string name="open_settings">OwOpen Settwings</string>
     <string name="more">mowe</string>
-    <string name="join_discord_server">Join da Discawd sewvew!</string>
     <string name="play_next">Pway nyext</string>
     <string name="add_to_queue">Mowe 2 QwQue pwease</string>
     <string name="retry">Wetwy</string>
@@ -36,10 +35,7 @@
     <string name="added_queue_toast">Mowe bwangers in dis quwue</string>
     <string name="playing_now">Pwaying Nyow</string>
     <string name="up_to_date_message">D-Da app is up to date ?-?-?!?1</string>
-    <string name="update_check_failed">Faiwed to check fow updates :&lt;</string>
-    <string name="github_rate_limit_retry">GitHub API rate wimited. Wetry in %1$s.</string>
     <string name="minutes">%1$d minwuites</string>
-    <string name="seconds">%1$d secwonds</string>
     <string name="update_available">Update Avaiwabwe!</string>
     <string name="new_version_body">OwO w-what\'s dis? nyew vewsion is avaiwabwe! (%1$s)</string>
     <string name="log_out">Wog Out :&lt;</string>
@@ -47,12 +43,8 @@
     <string name="app_info">A-app Infwo?!</string>
     <string name="check_for_updates">Checky wecky fow uwpdates</string>
     <string name="delete_downloads">Nyooo all da downwoads ;&lt;</string>
-    <string name="clear_login_info">Nyomor w-wogin i-info</string>
-    <string name="logged_in_message">You awe wogged in to youw YouTube account</string>
-    <string name="logged_out_message">You awe cuwwentwy nyot wogged in</string>
     <string name="account">Acwount</string>
     <string name="clear_data_message">Remowe aww da downwoaded songs n cache data fwom this dewice OwO</string>
-    <string name="clear_login_message">Cweaws aww da saved accounts n w-wogin infowmation</string>
     <string name="login_info_cleared">Login Info Cweawed</string>
     <string name="downloads_cleared">Downwoads Cweawed</string>
     <string name="invalid_navkey">Invawid NavKey : %1$s</string>
@@ -60,10 +52,6 @@
     <string name="cancel">Kwancew</string>
     <string name="remove_local_playlist">Wemove wocaw pwaywist ;-;</string>
     <string name="remove_local_confirm_text">Dewete da d-downwoaded fiwes fow dis pwaywist!? Da pwaywist wiww wemain avaiwabwe onwinye.</string>
-    <string name="ignore">Ignowe</string>
-    <string name="change_update_channel">Change update channew</string>
-    <string name="current_update_channel_body">Cuwwent update channew : %1$s</string>
-    <string name="beta_update_available">Omega Wupdate Avaiwabwe</string>
     <string name="home">H-home :3</string>
     <string name="search">Seawchie</string>
     <string name="no_results">Nyothing :3</string>
@@ -98,11 +86,9 @@
     <string name="delete_playlist">Delete Pwaywist</string>
     <string name="delete_playlist_text">R u sure you wanna dewete this pwaywist from your YouTube accwount ? Dis actwion cannot be weversed.</string>
     <string name="check_update_setting_description">Chwecks fow new upwdates fwom GitHub :3</string>
-    <string name="updates">Upwdates</string>
     <string name="current_version">Cuwwent vewsion</string>
     <string name="visibility">Viswibiwity</string>
     <string name="auto_update_title">Automatic Upwdate Chwecking</string>
-    <string name="auto_update_subtitle">Enabwes chwecking fow upwdate automaticawy on app waunch</string>
     <string name="sleep_timer">Sweep Tiwma</string>
     <string name="sleep_timer_active">Sweep Tiwma Active</string>
     <string name="sleep_timer_remaining">remaiwnin</string>

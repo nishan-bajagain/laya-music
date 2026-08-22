@@ -28,7 +28,6 @@
     <string name="download">Descărcare</string>
     <string name="open_settings">Deschide Setările</string>
     <string name="more">mai mult</string>
-    <string name="join_discord_server">Alătură-te serverului Discord</string>
     <string name="play_next">Redă următorul</string>
     <string name="add_to_queue">Adaugă în coadă</string>
     <string name="retry">Reîncercați</string>
@@ -36,10 +35,7 @@
     <string name="added_queue_toast">Melodie adăugată în coadă</string>
     <string name="playing_now">Redă acum</string>
     <string name="up_to_date_message">Aplicația este actualizată!</string>
-    <string name="update_check_failed">Verificarea actualizărilor a eșuat</string>
-    <string name="github_rate_limit_retry">Rata API-ului GitHub este limitată. Reîncercați în %1$s.</string>
     <string name="minutes">%1$d minute</string>
-    <string name="seconds">%1$d secunde</string>
     <string name="update_available">Actualizare disponibilă</string>
     <string name="new_version_body">Este disponibilă o versiune nouă. (%1$s)</string>
     <string name="log_out">Ieșire din cont</string>
@@ -47,12 +43,8 @@
     <string name="app_info">Informații despre aplicație</string>
     <string name="check_for_updates">Verifică pentru actualizări</string>
     <string name="delete_downloads">Șterge toate descărcările</string>
-    <string name="clear_login_info">Ștergeți informațiile de conectare</string>
-    <string name="logged_in_message">Ești conectat la contul tău de YouTube</string>
-    <string name="logged_out_message">Momentan nu ești conectat</string>
     <string name="account">Cont</string>
     <string name="clear_data_message">Șterge toate melodiile descărcate și datele din cache de pe acest dispozitiv</string>
-    <string name="clear_login_message">Curăță toate conturile salvate și informații de autentificare</string>
     <string name="login_info_cleared">Informații de conectare șterse</string>
     <string name="downloads_cleared">Descărcări șterse</string>
     <string name="invalid_navkey">Navkey invalid: %1$s</string>
@@ -60,10 +52,6 @@
     <string name="cancel">Anulează</string>
     <string name="remove_local_playlist">Elimină playlist local</string>
     <string name="remove_local_confirm_text">Ștergeți fișierele descărcate pentru această listă de redare? Lista de redare va rămâne disponibilă online.</string>
-    <string name="ignore">Ignoră</string>
-    <string name="change_update_channel">Schimbă canalul de actualizare</string>
-    <string name="current_update_channel_body">Canalul curent de actualizare: %1$s</string>
-    <string name="beta_update_available">Actualizare beta disponibilă</string>
     <string name="home">Acasă</string>
     <string name="search">Caută</string>
     <string name="no_results">Niciun rezultat</string>
@@ -98,11 +86,9 @@
     <string name="delete_playlist">Șterge Playlist</string>
     <string name="delete_playlist_text">Ești sigur că vrei să ștergi această listă de redare din contul tău YouTube? Această acțiune nu poate fi inversată.</string>
     <string name="check_update_setting_description">Verifică noi actualizări de la GitHub</string>
-    <string name="updates">Actualizări</string>
     <string name="current_version">Versiunea Curentă</string>
     <string name="visibility">Vizibilitate</string>
     <string name="auto_update_title">Verificare automată a actualizărilor</string>
-    <string name="auto_update_subtitle">Activează verificarea actualizării automat la lansarea aplicației</string>
     <string name="sleep_timer">Temporizator somn</string>
     <string name="sleep_timer_active">Temporizator somn activ</string>
     <string name="sleep_timer_remaining">rămas</string>

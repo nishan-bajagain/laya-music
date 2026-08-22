@@ -28,7 +28,6 @@
     <string name="download">Pobierz</string>
     <string name="open_settings">Otwórz ustawienia</string>
     <string name="more">więcej</string>
-    <string name="join_discord_server">Dołącz do serwera Discorda</string>
     <string name="play_next">Odtwórz następne</string>
     <string name="add_to_queue">Dodaj do kolejki</string>
     <string name="retry">Ponów próbę</string>
@@ -36,10 +35,7 @@
     <string name="added_queue_toast">Dodano utwór do kolejki</string>
     <string name="playing_now">Odtwarzanie teraz</string>
     <string name="up_to_date_message">Aplikacja jest aktualna!</string>
-    <string name="update_check_failed">Nie udało się sprawdzić aktualizacji</string>
-    <string name="github_rate_limit_retry">Prędkość API GitHub jest ograniczona. Spróbuj ponownie w %1$s.</string>
     <string name="minutes">%1$d minut</string>
-    <string name="seconds">%1$d sekund</string>
     <string name="update_available">Dostępna aktualizacja</string>
     <string name="new_version_body">Dostępna jest nowa wersja (%1$s)</string>
     <string name="log_out">Wyloguj</string>
@@ -47,12 +43,8 @@
     <string name="app_info">Informacje o aplikacji</string>
     <string name="check_for_updates">Sprawdź aktualizacje</string>
     <string name="delete_downloads">Usuń wszystkie pobrane</string>
-    <string name="clear_login_info">Wyczyść dane logowania</string>
-    <string name="logged_in_message">Jesteś zalogowany na swoje konto YouTube</string>
-    <string name="logged_out_message">Nie jesteś zalogowany</string>
     <string name="account">Konto</string>
     <string name="clear_data_message">Usuń wszystkie pobrane utwory i dane pamięci podręcznej z tego urządzenia</string>
-    <string name="clear_login_message">Czyści wszystkie zapisane konta i dane logowania</string>
     <string name="login_info_cleared">Wyczyszczono dane logowania</string>
     <string name="downloads_cleared">Pobieranie wyczyszczone</string>
     <string name="invalid_navkey">Nieprawidłowy NavKey : %1$s</string>
@@ -60,10 +52,6 @@
     <string name="cancel">Anuluj</string>
     <string name="remove_local_playlist">Usuń lokalną listę odtwarzania</string>
     <string name="remove_local_confirm_text">Usunąć pobrane pliki z tej playlisty? Lista odtwarzania pozostanie dostępna online.</string>
-    <string name="ignore">Ignoruj</string>
-    <string name="change_update_channel">Zmień kanał aktualizacji</string>
-    <string name="current_update_channel_body">Aktualny kanał aktualizacji: %1$s</string>
-    <string name="beta_update_available">Dostępna aktualizacja beta</string>
     <string name="home">Strona główna</string>
     <string name="search">Szukaj</string>
     <string name="no_results">Brak wyników</string>
@@ -98,11 +86,9 @@
     <string name="delete_playlist">Usuń playlistę</string>
     <string name="delete_playlist_text">Czy na pewno chcesz usunąć tę playlistę ze swojego konta YouTube? Tej akcji nie można cofnąć.</string>
     <string name="check_update_setting_description">Sprawdza dostępność nowych aktualizacji z GitHub</string>
-    <string name="updates">Aktualizacje</string>
     <string name="current_version">Aktualna wersja</string>
     <string name="visibility">Widoczność</string>
     <string name="auto_update_title">Automatyczne sprawdzanie aktualizacji</string>
-    <string name="auto_update_subtitle">Umożliwia automatyczne sprawdzanie aktualizacji po uruchomieniu aplikacji</string>
     <string name="sleep_timer">Czas uśpienia</string>
     <string name="sleep_timer_active">Czas uśpienia aktywny</string>
     <string name="sleep_timer_remaining">pozostało</string>

@@ -28,7 +28,6 @@
     <string name="download">downloaden</string>
     <string name="open_settings">Open instellingen</string>
     <string name="more">meer</string>
-    <string name="join_discord_server">Deelnemen aan de Discord server</string>
     <string name="play_next">Volgende afspelen</string>
     <string name="add_to_queue">Toevoegen aan wachtrij</string>
     <string name="retry">Opnieuw</string>
@@ -36,10 +35,7 @@
     <string name="added_queue_toast">Nummer toegevoegd aan de wachtrij</string>
     <string name="playing_now">Speelt nu</string>
     <string name="up_to_date_message">De app is up-to-date!</string>
-    <string name="update_check_failed">Controleren op updates mislukt</string>
-    <string name="github_rate_limit_retry">GitHub API snelheid beperkt. Probeer opnieuw in %1$s.</string>
     <string name="minutes">%1$d minuten</string>
-    <string name="seconds">%1$d seconden</string>
     <string name="update_available">Update beschikbaar</string>
     <string name="new_version_body">Er is een nieuwe versie beschikbaar. (%1$s)</string>
     <string name="log_out">Log uit</string>
@@ -47,12 +43,8 @@
     <string name="app_info">App informatie</string>
     <string name="check_for_updates">Op updates controleren</string>
     <string name="delete_downloads">Verwijder alle downloads</string>
-    <string name="clear_login_info">Inloggegevens wissen</string>
-    <string name="logged_in_message">Je bent ingelogd op je YouTube-account</string>
-    <string name="logged_out_message">U bent momenteel niet ingelogd</string>
     <string name="account">Rekening</string>
     <string name="clear_data_message">Verwijder alle gedownloade nummers en gegevens in de cache van dit apparaat</string>
-    <string name="clear_login_message">Verwijdert alle opgeslagen accounts en inloggegevens</string>
     <string name="login_info_cleared">Inloggegevens gewist</string>
     <string name="downloads_cleared">Downloads gewist</string>
     <string name="invalid_navkey">Ongeldige NavKey : %1$s</string>
@@ -60,10 +52,6 @@
     <string name="cancel">annuleren</string>
     <string name="remove_local_playlist">Lokale afspeellijst verwijderen</string>
     <string name="remove_local_confirm_text">Verwijder de gedownloade bestanden voor deze afspeellijst? De afspeellijst blijft online beschikbaar.</string>
-    <string name="ignore">Negeren</string>
-    <string name="change_update_channel">Update kanaal wijzigen</string>
-    <string name="current_update_channel_body">Huidige updatekanaal: %1$s</string>
-    <string name="beta_update_available">Beta Update beschikbaar</string>
     <string name="home">Startpagina</string>
     <string name="search">Zoeken</string>
     <string name="no_results">Geen resultaten gevonden</string>
@@ -98,11 +86,9 @@
     <string name="delete_playlist">Afspeellijst verwijderen</string>
     <string name="delete_playlist_text">Weet je zeker dat je deze afspeellijst van je YouTube-account wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.</string>
     <string name="check_update_setting_description">Controleert op nieuwe updates van GitHub</string>
-    <string name="updates">Bijwerken</string>
     <string name="current_version">Huidige versie</string>
     <string name="visibility">Zichtbaarheid</string>
     <string name="auto_update_title">Automatische update controle</string>
-    <string name="auto_update_subtitle">Activeert het automatisch controleren op updates bij het starten van de app</string>
     <string name="sleep_timer">Timer slaapstand</string>
     <string name="sleep_timer_active">Slaaptimer actief</string>
     <string name="sleep_timer_remaining">resterend</string>

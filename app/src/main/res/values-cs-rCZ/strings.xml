@@ -28,7 +28,6 @@
     <string name="download">Stáhnout</string>
     <string name="open_settings">Otevřít nastavení</string>
     <string name="more">více</string>
-    <string name="join_discord_server">Připojte se k Discord serveru</string>
     <string name="play_next">Přehrát další</string>
     <string name="add_to_queue">Přidat do fronty</string>
     <string name="retry">Opakovat</string>
@@ -36,10 +35,7 @@
     <string name="added_queue_toast">Přidána skladba do fronty</string>
     <string name="playing_now">Přehrává se nyní</string>
     <string name="up_to_date_message">Aplikace je aktuální!</string>
-    <string name="update_check_failed">Nepodařilo se zkontrolovat aktualizace</string>
-    <string name="github_rate_limit_retry">GitHub API sazba omezená. Zkuste to znovu v %1$s.</string>
     <string name="minutes">%1$d minut</string>
-    <string name="seconds">%1$d sekund</string>
     <string name="update_available">Dostupná aktualizace</string>
     <string name="new_version_body">Je k dispozici nová verze. (%1$s)</string>
     <string name="log_out">Odhlásit se</string>
@@ -47,12 +43,8 @@
     <string name="app_info">Informace o aplikaci</string>
     <string name="check_for_updates">Zkontrolovat aktualizace</string>
     <string name="delete_downloads">Odstranit všechna stahování</string>
-    <string name="clear_login_info">Vymazat přihlašovací údaje</string>
-    <string name="logged_in_message">Jste přihlášeni ke svému YouTube účtu</string>
-    <string name="logged_out_message">V současné době nejste přihlášeni</string>
     <string name="account">Účet</string>
     <string name="clear_data_message">Odstranit všechny stažené skladby a data v mezipaměti z tohoto zařízení</string>
-    <string name="clear_login_message">Vymaže všechny uložené účty a přihlašovací údaje</string>
     <string name="login_info_cleared">Přihlašovací údaje vymazány</string>
     <string name="downloads_cleared">Stahování vymazáno</string>
     <string name="invalid_navkey">Neplatný navigační klíč: %1$s</string>
@@ -60,10 +52,6 @@
     <string name="cancel">Zrušit</string>
     <string name="remove_local_playlist">Odstranit místní seznam skladeb</string>
     <string name="remove_local_confirm_text">Odstranit stažené soubory pro tento playlist? Seznam skladeb zůstane k dispozici online.</string>
-    <string name="ignore">Ignorovat</string>
-    <string name="change_update_channel">Změnit aktualizační kanál</string>
-    <string name="current_update_channel_body">Aktuální aktualizační kanál: %1$s</string>
-    <string name="beta_update_available">Dostupná beta aktualizace</string>
     <string name="home">Domů</string>
     <string name="search">Hledat</string>
     <string name="no_results">Žádné výsledky</string>
@@ -98,11 +86,9 @@
     <string name="delete_playlist">Odstranit playlist</string>
     <string name="delete_playlist_text">Jste si jisti, že chcete odstranit tento seznam skladeb z vašeho YouTube účtu? Tuto akci nelze vrátit zpět.</string>
     <string name="check_update_setting_description">Kontroluje nové aktualizace z GitHubu</string>
-    <string name="updates">Aktualizace</string>
     <string name="current_version">Aktuální verze</string>
     <string name="visibility">Viditelnost</string>
     <string name="auto_update_title">Automatická kontrola aktualizací</string>
-    <string name="auto_update_subtitle">Umožňuje automaticky kontrolovat aktualizace při spuštění aplikace</string>
     <string name="sleep_timer">Časovač spánku</string>
     <string name="sleep_timer_active">Časovač spánku aktivní</string>
     <string name="sleep_timer_remaining">zbývá</string>

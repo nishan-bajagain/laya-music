@@ -31,6 +31,7 @@ data class Song(
     val uid: String = Uuid.random().toString(),
     val isExplicit: Boolean = false,
     val isLiked: Boolean? = null,
+    val playCount: Int = 0,
 ) {
     /**
      * Per-entry playlist token returned by the YT Music API as `playlistSetVideoId`.
@@ -147,7 +148,8 @@ data class Song(
             audioFilePath == other.audioFilePath &&
             uid == other.uid &&
             isExplicit == other.isExplicit &&
-            isLiked == other.isLiked
+            isLiked == other.isLiked &&
+            playCount == other.playCount
     }
 
     override fun hashCode(): Int {
@@ -162,6 +164,7 @@ data class Song(
         result = 31 * result + uid.hashCode()
         result = 31 * result + isExplicit.hashCode()
         result = 31 * result + (isLiked?.hashCode() ?: 0)
+        result = 31 * result + playCount.hashCode()
         return result
     }
 

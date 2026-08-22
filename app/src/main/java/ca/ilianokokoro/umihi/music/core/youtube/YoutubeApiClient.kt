@@ -292,11 +292,25 @@ object YoutubeApiClient {
             id = null,
             settings = settings
         )
-        return requestWithBody(
+        val json = requestWithBody(
             url = Constants.YoutubeApi.Account.MENU_URL,
             body = body,
             settings = settings
         )
+        // Log the raw response structure (keys only, no PII) so avatar
+        // extraction issues can be diagnosed from Logcat alone.
+        try {
+            val root = kotlinx.serialization.json.Json.parseToJsonElement(json)
+            val rootKeys = (root as? kotlinx.serialization.json.JsonObject)?.keys ?: emptySet()
+            ca.ilianokokoro.umihi.music.core.helpers.LogHelper.printd(
+                "getAccountMenu: rootKeys=$rootKeys length=${json.length}"
+            )
+        } catch (_: Exception) {
+            ca.ilianokokoro.umihi.music.core.helpers.LogHelper.printd(
+                "getAccountMenu: raw length=${json.length} preview=${json.take(200)}"
+            )
+        }
+        return json
     }
 
     private suspend fun requestWithBody(

@@ -28,7 +28,6 @@
     <string name="download">Λήψη</string>
     <string name="open_settings">Άνοιγμα Ρυθμίσεων</string>
     <string name="more">περισσότερα</string>
-    <string name="join_discord_server">Γίνετε μέλος του διακομιστή Discord</string>
     <string name="play_next">Αναπαραγωγή επόμενου</string>
     <string name="add_to_queue">Προσθήκη στην ουρά</string>
     <string name="retry">Επανάληψη</string>
@@ -36,10 +35,7 @@
     <string name="added_queue_toast">Προστέθηκε τραγούδι στην ουρά</string>
     <string name="playing_now">Αναπαραγωγή Τώρα</string>
     <string name="up_to_date_message">Η εφαρμογή είναι ενημερωμένη!</string>
-    <string name="update_check_failed">Αποτυχία ελέγχου για ενημερώσεις</string>
-    <string name="github_rate_limit_retry">Περιορισμένη τιμή API GitHub. Προσπαθήστε ξανά σε %1$s.</string>
     <string name="minutes">%1$d λεπτά</string>
-    <string name="seconds">%1$d δευτερόλεπτα</string>
     <string name="update_available">Διαθέσιμη Ενημέρωση</string>
     <string name="new_version_body">Μια νέα έκδοση είναι διαθέσιμη. (%1$s)</string>
     <string name="log_out">Αποσύνδεση</string>
@@ -47,12 +43,8 @@
     <string name="app_info">Πληροφορίες Εφαρμογής</string>
     <string name="check_for_updates">Έλεγχος ενημερώσεων</string>
     <string name="delete_downloads">Διαγραφή όλων των λήψεων</string>
-    <string name="clear_login_info">Εκκαθάριση πληροφοριών σύνδεσης</string>
-    <string name="logged_in_message">Είστε συνδεδεμένοι στο λογαριασμό σας στο YouTube</string>
-    <string name="logged_out_message">Αυτή τη στιγμή δεν είστε συνδεδεμένοι</string>
     <string name="account">Λογαριασμός</string>
     <string name="clear_data_message">Αφαίρεση όλων των κατεβασμένων τραγουδιών και δεδομένων της προσωρινής μνήμης από αυτήν τη συσκευή</string>
-    <string name="clear_login_message">Καθαρίζει όλους τους αποθηκευμένους λογαριασμούς και τις πληροφορίες σύνδεσης</string>
     <string name="login_info_cleared">Πληροφορίες Σύνδεσης Εκκαθαρίστηκαν</string>
     <string name="downloads_cleared">Οι Λήψεις Εκκαθαρίστηκαν</string>
     <string name="invalid_navkey">Μη Έγκυρο NavKey : %1$s</string>
@@ -60,10 +52,6 @@
     <string name="cancel">Ακύρωση</string>
     <string name="remove_local_playlist">Αφαίρεση τοπικής λίστας αναπαραγωγής</string>
     <string name="remove_local_confirm_text">Διαγραφή των ληφθέντων αρχείων για αυτήν τη λίστα αναπαραγωγής? Η λίστα αναπαραγωγής θα παραμείνει διαθέσιμη online.</string>
-    <string name="ignore">Παράβλεψη</string>
-    <string name="change_update_channel">Αλλαγή καναλιού ενημέρωσης</string>
-    <string name="current_update_channel_body">Τρέχον κανάλι ενημέρωσης: %1$s</string>
-    <string name="beta_update_available">Διαθέσιμη Ενημέρωση Beta</string>
     <string name="home">Αρχική</string>
     <string name="search">Αναζήτηση</string>
     <string name="no_results">Δεν Υπάρχουν Αποτελέσματα</string>
@@ -98,11 +86,9 @@
     <string name="delete_playlist">Διαγραφή Λίστας</string>
     <string name="delete_playlist_text">Are you sure you want to delete this playlist from your YouTube Account ? This action cannot be reversed.</string>
     <string name="check_update_setting_description">Ελέγχει για νέες ενημερώσεις από το GitHub</string>
-    <string name="updates">Ενημερώσεις</string>
     <string name="current_version">Τρέχουσα Έκδοση</string>
     <string name="visibility">Ορατότητα</string>
     <string name="auto_update_title">Αυτόματος Έλεγχος Ενημέρωσης</string>
-    <string name="auto_update_subtitle">Ενεργοποιεί τον έλεγχο για ενημέρωση αυτόματα κατά την εκκίνηση της εφαρμογής</string>
     <string name="sleep_timer">Χρονόμετρο Ύπνου</string>
     <string name="sleep_timer_active">Ενεργός Χρονόμετρο Ύπνου</string>
     <string name="sleep_timer_remaining">απομένουν</string>

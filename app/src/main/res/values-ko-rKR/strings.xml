@@ -28,7 +28,6 @@
     <string name="download">다운로드</string>
     <string name="open_settings">설정 열기</string>
     <string name="more">더 보기</string>
-    <string name="join_discord_server">Discord 서버 참여</string>
     <string name="play_next">다음으로 재생</string>
     <string name="add_to_queue">대기열에 추가</string>
     <string name="retry">재시도</string>
@@ -36,10 +35,7 @@
     <string name="added_queue_toast">노래가 대기열에 추가되었습니다</string>
     <string name="playing_now">음악이 지금 재생 중입니다</string>
     <string name="up_to_date_message">앱은 이미 최신 버전입니다!</string>
-    <string name="update_check_failed">업데이트 확인 중 문제가 발생했습니다</string>
-    <string name="github_rate_limit_retry">GitHub API rate limited. Retry in %1$s.</string>
     <string name="minutes">%1$d minutes</string>
-    <string name="seconds">%1$d seconds</string>
     <string name="update_available">업데이트가 있습니다</string>
     <string name="new_version_body">새 버전이 있습니다. (%1$s)</string>
     <string name="log_out">로그아웃</string>
@@ -47,12 +43,8 @@
     <string name="app_info">앱 정보</string>
     <string name="check_for_updates">업데이트 확인</string>
     <string name="delete_downloads">모든 다운로드 삭제</string>
-    <string name="clear_login_info">로그인 정보 삭제</string>
-    <string name="logged_in_message">YouTube 계정에 로그인되어 있습니다</string>
-    <string name="logged_out_message">지금 로그인되어 있지 않아요</string>
     <string name="account">내 계정</string>
     <string name="clear_data_message">Deletes all the downloaded songs and cache</string>
-    <string name="clear_login_message">저장된 모든 계정 및 로그인 정보를 삭제합니다</string>
     <string name="login_info_cleared">로그인 정보 삭제 완료</string>
     <string name="downloads_cleared">다운로드 삭제 완료</string>
     <string name="invalid_navkey">잘못된 NavKey입니다 : %1$s</string>
@@ -60,10 +52,6 @@
     <string name="cancel">취소</string>
     <string name="remove_local_playlist">로컬 플레이리스트 삭제하기</string>
     <string name="remove_local_confirm_text">이 플레이리스트 다운로드 파일을 지울까요? 온라인에서는 계속 들을 수 있어요.</string>
-    <string name="ignore">무시하기</string>
-    <string name="change_update_channel">업데이트 채널 변경하기</string>
-    <string name="current_update_channel_body">현재 업데이트 채널 : %1$s</string>
-    <string name="beta_update_available">베타 업데이트 있어요</string>
     <string name="home">홈</string>
     <string name="search">찾기</string>
     <string name="no_results">찾은 결과가 없어요</string>
@@ -98,11 +86,9 @@
     <string name="delete_playlist">재생목록 삭제하기</string>
     <string name="delete_playlist_text">YouTube 계정에서 이 재생목록을 삭제할까요? 이 작업은 되돌릴 수 없어요.</string>
     <string name="check_update_setting_description">GitHub에서 새 업데이트를 확인해요</string>
-    <string name="updates">업데이트</string>
     <string name="current_version">현재 버전</string>
     <string name="visibility">표시 여부</string>
     <string name="auto_update_title">자동으로 업데이트 확인해요</string>
-    <string name="auto_update_subtitle">앱 열면 자동으로 업데이트 확인해요</string>
     <string name="sleep_timer">수면 타이머</string>
     <string name="sleep_timer_active">수면 타이머 켜짐</string>
     <string name="sleep_timer_remaining">남은 시간</string>

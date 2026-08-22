@@ -45,6 +45,7 @@ object AccountInfoHelper {
 
             val responseJson = YoutubeApiClient.getAccountMenu(settings)
             val (parsedName, parsedEmail, parsedAvatar) = parseAccountInfo(responseJson)
+            printd("AccountInfoHelper fetchAndSave: name=${parsedName.take(30)} email=${parsedEmail.take(30)} avatar=${parsedAvatar.take(120)}")
             if (parsedName.isNotBlank() || parsedEmail.isNotBlank() || parsedAvatar.isNotBlank()) {
                 datastoreRepository.saveAccountInfo(parsedName, parsedEmail, parsedAvatar)
             }
@@ -65,15 +66,8 @@ object AccountInfoHelper {
         return try {
             val root = json.parseToJsonElement(jsonString).jsonObject
 
-            // Both paths are tried even when "actions" is absent — the old
-            // code returned early on a missing actions array, which made the
-            // root-level header fallback unreachable.
             val headerRenderer = findActiveAccountHeader(root)
             if (headerRenderer == null) {
-                // Debug-only: the account_menu response no longer carries the
-                // header in either known location. Log the response's top-level
-                // keys so the next debug run reveals the new structure without
-                // dumping the whole (account-identifying) body.
                 printd(
                     "AccountInfoHelper: activeAccountHeaderRenderer not found; " +
                         "rootKeys=${root.keys}"
@@ -84,20 +78,21 @@ object AccountInfoHelper {
             val name = headerRenderer["accountName"].textFromRuns() ?: ""
             val email = headerRenderer["email"].textFromRuns() ?: ""
 
-            val avatarUrl = extractAvatarUrl(headerRenderer)
+            val avatarUrl = extractAvatarUrl(headerRenderer, root)
             if (avatarUrl.isBlank()) {
-                // Debug-only diagnostics for avatar-schema drift. The scraped
-                // account_menu response has changed shape more than once, and a
-                // blank avatar means the accountPhoto sub-object no longer
-                // matches any known shape — printing it (never the full
-                // response) makes the next debug run show exactly what Google
-                // is sending. Gated on BuildConfig.DEBUG, so it is dead code in
-                // release builds and can never reach crash reports.
+                // Dump the header structure for diagnosis — keys + accountPhoto
+                // value reveals the new schema without dumping PII.
                 printd(
                     "AccountInfoHelper: avatar URL not found; " +
                         "headerKeys=${headerRenderer.keys} " +
                         "accountPhoto=${headerRenderer["accountPhoto"]}"
                 )
+                // Also dump ALL keys in the entire root for a complete picture
+                printd(
+                    "AccountInfoHelper: rootKeys=${root.keys} rootSize=${root.size}"
+                )
+            } else {
+                printd("AccountInfoHelper: avatar extracted: ${avatarUrl.take(120)}")
             }
 
             Triple(name, email, avatarUrl)
@@ -114,23 +109,14 @@ object AccountInfoHelper {
      * YouTube's (undocumented, scraped) account_menu response has carried the
      * photo under several shapes over time, so every recognized one is
      * collected and the largest by pixel area is returned — dimension-less
-     * URLs act as ordered fallbacks. Recognized shapes:
-     *
-     *  - `accountPhoto.thumbnails[]` (classic)
-     *  - `accountPhoto.thumbnail.thumbnails[]` (newer wrapper)
-     *  - `accountPhoto.image.sources[]` / `accountPhoto.avatar.sources[]`
-     *    (newest "image renderer" pattern)
-     *  - `accountPhoto.url` / `accountPhoto.thumbnail.url` (direct)
-     *  - `accountPhoto` as a plain string URL
-     *  - renamed photo keys (`accountAvatar`, `avatar`, `image`, `photo`)
+     * URLs act as ordered fallbacks.
      *
      * The largest thumbnail is chosen by comparing width/height values when
-     * present, never by assuming array order — YouTube has ordered these both
-     * smallest→largest and largest→smallest at different times. Never throws:
-     * an unrecognized shape yields "" while name/email still parse.
+     * present, never by assuming array order. Never throws: an unrecognized
+     * shape yields "" while name/email still parse.
      */
-    private fun extractAvatarUrl(headerRenderer: JsonObject): String {
-        val withSize = mutableListOf<Pair<String, Int>>()
+    private fun extractAvatarUrl(headerRenderer: JsonObject, root: JsonObject): String {
+        val candidates = mutableListOf<Pair<String, Int>>()
         val withoutSize = mutableListOf<String>()
 
         fun consider(url: String?, width: Int?, height: Int?) {
@@ -142,7 +128,7 @@ object AccountInfoHelper {
                 height != null -> height
                 else -> -1
             }
-            if (area > 0) withSize += normalized to area else withoutSize += normalized
+            if (area > 0) candidates += normalized to area else withoutSize += normalized
         }
 
         fun considerThumbnail(entry: JsonElement?) {
@@ -167,12 +153,52 @@ object AccountInfoHelper {
             array?.asArray()?.forEach { considerThumbnail(it) }
         }
 
+        /**
+         * Recursively search a JSON tree for any image URL. Handles both
+         * objects and arrays at every nesting level. This is the nuclear
+         * fallback for when YouTube adds new nesting levels that the
+         * explicit pattern matching above doesn't cover.
+         */
+        fun considerDeep(element: JsonElement?, depth: Int = 0) {
+            if (element == null || depth > 10) return
+            when (element) {
+                is JsonObject -> {
+                    for (urlKey in listOf("url", "imageUrl", "src", "photoUrl", "uri")) {
+                        val url = element[urlKey]?.asString()
+                        if (url != null && UmihiHelper.sanitizeImageUrl(url).isNotBlank()) {
+                            consider(url, element["width"]?.asInt(), element["height"]?.asInt())
+                        }
+                    }
+                    for (arrayKey in listOf("thumbnails", "sources", "contents")) {
+                        val arr = element[arrayKey]?.asArray()
+                        if (arr != null) {
+                            arr.forEach { considerThumbnail(it) }
+                        }
+                    }
+                    for ((_, value) in element) {
+                        considerDeep(value, depth + 1)
+                    }
+                }
+                is JsonArray -> {
+                    element.forEach { considerDeep(it, depth + 1) }
+                }
+                else -> {}
+            }
+        }
+
         // Keys that have carried the photo across schema revisions, in order of
         // likelihood. All are collected so the largest photo wins regardless of
         // which key held it.
-        val photoKeys = listOf("accountPhoto", "accountAvatar", "avatar", "image", "photo")
+        val photoKeys = listOf(
+            "accountPhoto", "accountAvatar", "avatar", "image", "photo",
+            "profilePicture", "profilePhoto", "avatarImage"
+        )
         val arrayKeys = listOf("thumbnails", "sources")
-        val wrapperKeys = listOf("thumbnail", "image", "avatar", "photo")
+        val wrapperKeys = listOf(
+            "thumbnail", "image", "avatar", "photo",
+            "photoRenderer", "customThumbnail", "customPhoto",
+            "imageRenderer", "avatarRenderer"
+        )
 
         for (key in photoKeys) {
             val photo = headerRenderer[key] ?: continue
@@ -206,14 +232,161 @@ object AccountInfoHelper {
                     wrapper["height"]?.asInt()
                 )
                 arrayKeys.forEach { considerArray(wrapper[it]) }
+
+                // One more level of nesting for deeply wrapped patterns
+                for (innerKey in wrapperKeys) {
+                    val inner = wrapper[innerKey]?.asObject() ?: continue
+                    consider(
+                        inner["url"]?.asString(),
+                        inner["width"]?.asInt(),
+                        inner["height"]?.asInt()
+                    )
+                    arrayKeys.forEach { considerArray(inner[it]) }
+                }
             }
         }
 
-        return if (withSize.isNotEmpty()) {
-            withSize.maxByOrNull { it.second }?.first ?: ""
+        // If none of the known keys produced a URL, fall back to deep
+        // recursive scans.
+        if (candidates.isEmpty() && withoutSize.isEmpty()) {
+            printd("AccountInfoHelper: no avatar from known keys, trying deep scan of header")
+            considerDeep(headerRenderer)
+        }
+
+        if (candidates.isEmpty() && withoutSize.isEmpty()) {
+            printd("AccountInfoHelper: deep scan of header empty, scanning full root")
+            considerDeep(root)
+        }
+
+        // Last resort: scan for any Google/YouTube image CDN URL in the entire tree.
+        // This handles completely new API shapes by matching known CDN hostnames.
+        if (candidates.isEmpty() && withoutSize.isEmpty()) {
+            printd("AccountInfoHelper: scanning root for image CDN URLs")
+            findImageCdnUrls(root).forEach { consider(it, null, null) }
+        }
+
+        // Nuclear option: recursively search the entire accountPhoto subtree
+        // (and all header subtrees) for any thumbnail array or URL, regardless
+        // of key names. YouTube's API schema drift is the primary cause of
+        // blank avatars.
+        if (candidates.isEmpty() && withoutSize.isEmpty()) {
+            printd("AccountInfoHelper: all extraction failed, trying subtree scan")
+            val photo = headerRenderer["accountPhoto"]
+            val found = findThumbnailInSubtree(photo)
+            if (found.isNotBlank()) {
+                consider(found, null, null)
+            } else {
+                // Try every top-level key in the header as a potential photo container
+                for ((_, v) in headerRenderer) {
+                    val found2 = findThumbnailInSubtree(v)
+                    if (found2.isNotBlank()) {
+                        consider(found2, null, null)
+                        break
+                    }
+                }
+            }
+        }
+
+        val result = if (candidates.isNotEmpty()) {
+            candidates.maxByOrNull { it.second }?.first ?: ""
         } else {
             withoutSize.firstOrNull() ?: ""
         }
+
+        printd("AccountInfoHelper extractAvatar: candidates=${candidates.size} noSize=${withoutSize.size} result=${result.take(100)}")
+        return result
+    }
+
+    /**
+     * Scans the entire JSON tree for any URL that looks like it comes from a
+     * known Google/YouTube image CDN. This is the final fallback for completely
+     * new API shapes.
+     */
+    private fun findImageCdnUrls(element: JsonElement?, depth: Int = 0): List<String> {
+        if (element == null || depth > 10) return emptyList()
+        val results = mutableListOf<String>()
+        when (element) {
+            is JsonObject -> {
+                for ((key, value) in element) {
+                    if (value is JsonPrimitive) {
+                        val url = value.contentOrNull
+                        if (url != null && looksLikeImageCdnUrl(url)) {
+                            results.add(url)
+                        }
+                    } else {
+                        results.addAll(findImageCdnUrls(value, depth + 1))
+                    }
+                }
+            }
+            is JsonArray -> {
+                element.forEach { results.addAll(findImageCdnUrls(it, depth + 1)) }
+            }
+            else -> {}
+        }
+        return results
+    }
+
+    /** Returns true if the string looks like a Google/YouTube image CDN URL. */
+    private fun looksLikeImageCdnUrl(url: String): Boolean {
+        if (!url.startsWith("http")) return false
+        val lower = url.lowercase()
+        return lower.contains("ggpht.com") ||
+            lower.contains("googleusercontent.com") ||
+            lower.contains("ytimg.com") ||
+            lower.contains("google.com/images")
+    }
+
+    /**
+     * Looks for a thumbnail URL inside an arbitrary JSON subtree that might
+     * be an accountPhoto-like object, regardless of its exact key names or
+     * nesting depth. YouTube periodically restructures this object, so we
+     * search for any URL field at any depth and also for any "thumbnails"
+     * array at any depth.
+     */
+    private fun findThumbnailInSubtree(element: JsonElement?, depth: Int = 0): String {
+        if (element == null || depth > 6) return ""
+        when (element) {
+            is JsonObject -> {
+                // Check for a direct "url" or "imageUrl" field
+                for (key in listOf("url", "imageUrl", "src", "photoUrl")) {
+                    val url = element[key]?.asString()
+                    if (url != null) {
+                        val sanitized = UmihiHelper.sanitizeImageUrl(url)
+                        if (sanitized.isNotBlank()) return sanitized
+                    }
+                }
+                // Check for a thumbnails array
+                val thumbs = element["thumbnails"]?.asArray()
+                if (thumbs != null) {
+                    var best = ""
+                    var bestArea = 0
+                    for (t in thumbs) {
+                        val obj = t.asObject() ?: continue
+                        val url = obj["url"]?.asString() ?: continue
+                        val sanitized = UmihiHelper.sanitizeImageUrl(url)
+                        if (sanitized.isBlank()) continue
+                        val w = obj["width"]?.asInt() ?: 0
+                        val h = obj["height"]?.asInt() ?: 0
+                        val area = w * h
+                        if (area > bestArea) { bestArea = area; best = sanitized }
+                    }
+                    if (best.isNotBlank()) return best
+                }
+                // Recurse into all values
+                for ((_, v) in element) {
+                    val found = findThumbnailInSubtree(v, depth + 1)
+                    if (found.isNotBlank()) return found
+                }
+            }
+            is JsonArray -> {
+                for (item in element) {
+                    val found = findThumbnailInSubtree(item, depth + 1)
+                    if (found.isNotBlank()) return found
+                }
+            }
+            else -> {}
+        }
+        return ""
     }
 
     /**
@@ -224,6 +397,7 @@ object AccountInfoHelper {
      * aborting the parse.
      */
     private fun findActiveAccountHeader(root: JsonObject): JsonObject? {
+        // Path 1: actions[0].openPopupAction.popup.multiPageMenuRenderer.header
         root["actions"]
             .asArray()
             ?.firstOrNull()
@@ -240,10 +414,56 @@ object AccountInfoHelper {
             ?.asObject()
             ?.let { return it }
 
-        return root["header"]
+        // Path 2: root.header.activeAccountHeaderRenderer
+        root["header"]
             ?.asObject()
             ?.get("activeAccountHeaderRenderer")
             ?.asObject()
+            ?.let { return it }
+
+        // Path 3: root.activeAccountHeaderRenderer (flat)
+        root["activeAccountHeaderRenderer"]
+            ?.asObject()
+            ?.let { return it }
+
+        // Path 4: actions[0].openPopupAction.popup contains activeAccountHeaderRenderer directly
+        root["actions"]
+            .asArray()
+            ?.firstOrNull()
+            ?.asObject()
+            ?.get("openPopupAction")
+            ?.asObject()
+            ?.get("popup")
+            ?.asObject()
+            ?.let { popup ->
+                val header = popup["activeAccountHeaderRenderer"]?.asObject()
+                if (header != null) return header
+                // Some API versions wrap in a renderers array
+                val renderers = popup["renderers"]?.asArray()
+                renderers?.forEach { renderer ->
+                    val obj = renderer.asObject() ?: return@forEach
+                    val h = obj["activeAccountHeaderRenderer"]?.asObject()
+                    if (h != null) return h
+                }
+            }
+
+        // Path 5: Deep search — look for activeAccountHeaderRenderer anywhere in the tree
+        return findDeep(root, "activeAccountHeaderRenderer", maxDepth = 6)
+    }
+
+    /**
+     * Recursively search for a key matching [targetKey] anywhere in the JSON tree.
+     * Returns the JsonObject value if found, null otherwise.
+     */
+    private fun findDeep(obj: JsonObject, targetKey: String, maxDepth: Int, depth: Int = 0): JsonObject? {
+        if (depth > maxDepth) return null
+        for ((key, value) in obj) {
+            if (key == targetKey && value is JsonObject) return value
+            val childObj = value.asObject() ?: continue
+            val found = findDeep(childObj, targetKey, maxDepth, depth + 1)
+            if (found != null) return found
+        }
+        return null
     }
 
     /**

@@ -3,6 +3,7 @@
 package ca.ilianokokoro.umihi.music.ui.screens.home
 
 import android.app.Application
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,65 +16,62 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material.icons.outlined.AccountCircle
-import androidx.compose.material.icons.outlined.MusicNote
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.outlined.CloudOff
+import androidx.compose.material.icons.outlined.Downloading
+import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ca.ilianokokoro.umihi.music.R
 import ca.ilianokokoro.umihi.music.core.Constants
-import ca.ilianokokoro.umihi.music.core.helpers.ComposeHelper
-import ca.ilianokokoro.umihi.music.core.helpers.UmihiHelper
+import ca.ilianokokoro.umihi.music.core.helpers.ConnectivityHelper
 import ca.ilianokokoro.umihi.music.core.managers.PlayerManager
-import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository
-import ca.ilianokokoro.umihi.music.models.PlaylistInfo
 import ca.ilianokokoro.umihi.music.models.Song
-import ca.ilianokokoro.umihi.music.ui.components.ErrorMessage
 import ca.ilianokokoro.umihi.music.ui.components.FadingStatusBarWrapper
-import ca.ilianokokoro.umihi.music.ui.components.LoadingAnimation
 import ca.ilianokokoro.umihi.music.ui.components.SquareImage
-import ca.ilianokokoro.umihi.music.ui.components.dialog.PlaylistCreationDialog
-import ca.ilianokokoro.umihi.music.ui.components.materialu.MaterialUButton
-import ca.ilianokokoro.umihi.music.ui.components.playlist.PlaylistCard
 import ca.ilianokokoro.umihi.music.ui.navigation.viewmodels.SharedViewModel
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
+import kotlinx.coroutines.delay
+import java.util.Calendar
+
+private const val HERO_AUTO_SCROLL_MS = 4_500L
 
 @Composable
 fun HomeScreen(
@@ -81,49 +79,45 @@ fun HomeScreen(
     onSettingsButtonPress: () -> Unit,
     onProfilePress: () -> Unit = {},
     onLogin: () -> Unit = {},
-    onPlaylistPressed: (playlistInfo: PlaylistInfo) -> Unit,
+    onPlaylistPressed: (playlistInfo: ca.ilianokokoro.umihi.music.models.PlaylistInfo) -> Unit,
     application: Application,
     homeViewModel: HomeViewModel = viewModel(
-        factory =
-            HomeViewModel.Factory(application = application)
+        factory = HomeViewModel.Factory(application = application)
     )
-
 ) {
     val uiState = homeViewModel.uiState.collectAsStateWithLifecycle().value
-    val downloadedSongCount = uiState.downloadedSongCount
-
-    // Static PlaylistInfo for the local "Downloads" playlist — always shown regardless of login.
-    val downloadedPlaylistTitle = stringResource(R.string.downloaded_playlist_title)
-    val downloadedPlaylistInfo = remember(downloadedPlaylistTitle) {
-        PlaylistInfo(
-            id = Constants.Downloads.DOWNLOADED_PLAYLIST_ID,
-            title = downloadedPlaylistTitle,
-        )
-    }
-
-    var createPlaylistOpen by remember { mutableStateOf(false) }
-
-    val deletedPlaylistIds by sharedViewModel.deletedPlaylistIds.collectAsStateWithLifecycle()
-    val playlistRefreshNeeded by sharedViewModel.playlistRefreshNeeded.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
-    val datastoreRepository = remember { DatastoreRepository(context) }
-    val accountAvatarUrl by datastoreRepository.accountAvatarUrl.collectAsStateWithLifecycle(initialValue = "")
-    val cookies by datastoreRepository.cookies.collectAsStateWithLifecycle(initialValue = ca.ilianokokoro.umihi.music.models.Cookies())
-    val isLoggedIn = cookies.isNotEmpty()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var isOnline by remember { mutableStateOf(ConnectivityHelper.isNetworkAvailable(context)) }
 
-    LaunchedEffect(deletedPlaylistIds, playlistRefreshNeeded) {
-        when {
-            playlistRefreshNeeded -> {
-                homeViewModel.refreshPlaylists()
-                sharedViewModel.consumePlaylistRefresh()
-                sharedViewModel.consumeDeletedPlaylists()
+    // Re-check connectivity when app returns to foreground
+    LaunchedEffect(lifecycleOwner) {
+        val observer = object : androidx.lifecycle.LifecycleEventObserver {
+            override fun onStateChanged(source: androidx.lifecycle.LifecycleOwner, event: androidx.lifecycle.Lifecycle.Event) {
+                if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                    val nowOnline = ConnectivityHelper.isNetworkAvailable(context)
+                    if (nowOnline != isOnline) {
+                        isOnline = nowOnline
+                        homeViewModel.loadHomeFeed()
+                    }
+                }
             }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        try {
+            kotlinx.coroutines.suspendCancellableCoroutine<Unit> { }
+        } finally {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
-            deletedPlaylistIds.isNotEmpty() -> {
-                homeViewModel.removePlaylistsFromList(deletedPlaylistIds)
-                sharedViewModel.consumeDeletedPlaylists()
-            }
+    // Time-based greeting
+    val greeting = remember {
+        when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
+            in 0..11 -> "Good morning"
+            in 12..16 -> "Good afternoon"
+            else -> "Good evening"
         }
     }
 
@@ -131,224 +125,356 @@ fun HomeScreen(
         Scaffold(
             contentWindowInsets = WindowInsets(0.dp),
         ) { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    top = statusBarHeight + paddingValues.calculateTopPadding() + 8.dp,
+                    bottom = Constants.Ui.SCROLLABLE_BOTTOM_PADDING
+                ),
+                verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
-                when (uiState.screenState) {
-                    is ScreenState.LoggedIn -> {
-                        val playlists = uiState.screenState.playlistInfos
+                // ── Greeting header + profile icon ──────────────────────
+                item(key = "home_greeting") {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (isOnline) greeting else stringResource(R.string.home),
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f)
+                        )
+                        IconButton(onClick = onProfilePress) {
+                            Icon(
+                                imageVector = Icons.Outlined.AccountCircle,
+                                contentDescription = stringResource(R.string.cd_profile),
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+                    }
+                }
 
-                        // Always show the full grid — even when there are no remote playlists.
-                        // This keeps the Downloads card, profile button and create-playlist
-                        // button accessible in all logged-in states (e.g. API failure with
-                        // empty local cache, or a brand-new account with no playlists yet).
-                        PullToRefreshBox(
-                            isRefreshing = uiState.isRefreshing,
-                            onRefresh = homeViewModel::refreshPlaylists
+                // ── Offline banner ────────────────────────────────────────
+                if (!isOnline) {
+                    item(key = "home_offline_banner") {
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            color = MaterialTheme.colorScheme.errorContainer,
+                            shape = RoundedCornerShape(12.dp)
                         ) {
-                            LazyVerticalGrid(
-                                modifier = Modifier.fillMaxSize(),
-                                columns = GridCells.Adaptive(minSize = 150.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                            Row(
+                                modifier = Modifier.padding(16.dp),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                contentPadding = PaddingValues(
-                                    top = paddingValues.calculateTopPadding() + statusBarHeight + 8.dp,
-                                    bottom = Constants.Ui.SCROLLABLE_BOTTOM_PADDING,
-                                    end = 8.dp,
-                                    start = 8.dp
-                                )
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                item(
-                                    key = "home_header",
-                                    span = { GridItemSpan(maxLineSpan) },
-                                    contentType = "header"
-                                ) {
-                                    Row(
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        // Profile avatar button (left)
-                                        var avatarFailed by remember(accountAvatarUrl) {
-                                            mutableStateOf(false)
-                                        }
-                                        IconButton(onClick = onProfilePress) {
-                                            // Google's accountPhoto can come back as a
-                                            // protocol-relative 96px thumbnail — normalize
-                                            // before Coil sees it so it loads and isn't blurry.
-                                            val safeAvatarUrl = UmihiHelper.normalizeGoogleAvatarUrl(
-                                                accountAvatarUrl
-                                            )
-                                            if (isLoggedIn && safeAvatarUrl.isNotBlank() && !avatarFailed) {
-                                                val avatarRequest = remember(safeAvatarUrl) {
-                                                    ImageRequest.Builder(context)
-                                                        .data(safeAvatarUrl)
-                                                        // 36dp avatar ≈ 108px @3x — bound the
-                                                        // decode well below the raw URL size.
-                                                        .size(96, 96)
-                                                        .build()
-                                                }
-                                                AsyncImage(
-                                                    model = avatarRequest,
-                                                    contentDescription = "Profile",
-                                                    modifier = Modifier
-                                                        .size(36.dp)
-                                                        .clip(CircleShape),
-                                                    contentScale = ContentScale.Crop,
-                                                    onError = { avatarFailed = true }
-                                                )
-                                            } else {
-                                                Icon(
-                                                    imageVector = Icons.Outlined.AccountCircle,
-                                                    contentDescription = "Profile",
-                                                    modifier = Modifier.size(28.dp)
-                                                )
-                                            }
-                                        }
+                                Icon(
+                                    imageVector = Icons.Outlined.CloudOff,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                                Text(
+                                    text = stringResource(R.string.home_offline_mode),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                            }
+                        }
+                    }
+                }
 
-                                        // Create playlist button (right)
-                                        MaterialUButton(
-                                            onClick = { createPlaylistOpen = true },
-                                            icon = Icons.AutoMirrored.Rounded.PlaylistAdd,
-                                            text = stringResource(R.string.create_playlist)
-                                        )
-                                    }
-                                }
+                // ── Hero carousel (only when >=2 distinct picks) ────────
+                if (uiState.heroPicks.size >= 2) {
+                    item(key = "home_hero_carousel") {
+                        HeroCarousel(
+                            picks = uiState.heroPicks,
+                            onSongPressed = { song ->
+                                val index = uiState.heroPicks.indexOfFirst { it.youtubeId == song.youtubeId }
+                                    .coerceAtLeast(0)
+                                PlayerManager.playQueue(
+                                    uiState.heroPicks.map { it.mediaItem },
+                                    index
+                                )
+                            }
+                        )
+                    }
+                }
 
-                                item(
-                                    key = "home_recommendations",
-                                    span = { GridItemSpan(maxLineSpan) },
-                                    contentType = "recommendation_rail"
-                                ) {
-                                    HomeRecommendationRail(
-                                        songs = uiState.recommendations,
-                                        loading = uiState.recommendationsLoading,
-                                        onSongPressed = { song ->
-                                            val index = uiState.recommendations.indexOfFirst {
-                                                it.youtubeId == song.youtubeId
-                                            }.coerceAtLeast(0)
-                                            PlayerManager.playQueue(
-                                                uiState.recommendations.map { it.mediaItem },
-                                                index
-                                            )
-                                        }
-                                    )
-                                }
+                // ── Named shelves (stable section order, deduplicated) ───
+                if (uiState.shelves.isNotEmpty()) {
+                    items(
+                        items = uiState.shelves,
+                        key = { "shelf_${it.title}" },
+                        contentType = { _ -> "shelf" }
+                    ) { shelf ->
+                        HomeShelfRail(
+                            title = shelf.title,
+                            songs = shelf.songs,
+                            onSongPressed = { song ->
+                                val index = shelf.songs.indexOfFirst { it.youtubeId == song.youtubeId }
+                                    .coerceAtLeast(0)
+                                PlayerManager.playQueue(
+                                    shelf.songs.map { it.mediaItem },
+                                    index
+                                )
+                            }
+                        )
+                    }
+                }
 
-                                // Downloaded playlist — always the first card in the grid.
-                                item(
-                                    key = Constants.Downloads.DOWNLOADED_PLAYLIST_ID,
-                                    contentType = "playlist"
-                                ) {
-                                    PlaylistCard(
-                                        playlistInfo = downloadedPlaylistInfo,
-                                        subtitle = stringResource(
-                                            R.string.downloaded_playlist_subtitle,
-                                            downloadedSongCount
-                                        ),
-                                        onClicked = { onPlaylistPressed(downloadedPlaylistInfo) }
-                                    )
-                                }
+                // ── Skeleton loading (only while fetching, not on error) ──
+                if (uiState.shelvesLoading && !uiState.shelvesError && uiState.shelves.isEmpty()) {
+                    items(4, key = { "skeleton_$it" }, contentType = { _ -> "skeleton" }) {
+                        HomeShelfSkeleton()
+                    }
+                }
 
-                                if (playlists.isEmpty()) {
-                                    item(
-                                        key = "home_empty_playlists",
-                                        span = { GridItemSpan(maxLineSpan) },
-                                        contentType = "empty"
-                                    ) {
-                                        Text(
-                                            stringResource(R.string.no_playlists),
-                                            textAlign = TextAlign.Center
-                                        )
-                                    }
-                                } else {
-                                    itemsIndexed(
-                                        items = playlists,
-                                        key = { index, playlist ->
-                                            ComposeHelper.getLazyKey(
-                                                playlist,
-                                                playlist.id,
-                                                index
-                                            )
-                                        },
-                                        contentType = { _, _ -> "playlist" }
-                                    ) { _, playlist ->
-                                        PlaylistCard(
-                                            playlistInfo = playlist,
-                                            onClicked = { onPlaylistPressed(playlist) }
-                                        )
-                                    }
+                // ── Error state with retry ────────────────────────────────
+                if (uiState.shelvesError && uiState.shelves.isEmpty() && isOnline) {
+                    item(key = "home_error", contentType = "error") {
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.ErrorOutline,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(48.dp),
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                                Text(
+                                    text = "Couldn't load recommendations",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "Check your connection and try again",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                TextButton(onClick = { homeViewModel.loadHomeFeed() }) {
+                                    Text(stringResource(R.string.retry))
                                 }
                             }
                         }
                     }
+                }
 
-                    ScreenState.LoggedOut -> Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        // Show the Downloads card even when not logged in — downloaded songs
-                        // are always accessible offline.
-                        Box(
+                // ── Empty offline state ───────────────────────────────────
+                if (!isOnline && uiState.shelves.isEmpty() && !uiState.shelvesLoading) {
+                    item(key = "home_offline_empty", contentType = "empty") {
+                        Surface(
                             modifier = Modifier
-                                .fillMaxWidth(0.45f)
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            shape = RoundedCornerShape(16.dp)
                         ) {
-                            PlaylistCard(
-                                playlistInfo = downloadedPlaylistInfo,
-                                subtitle = stringResource(
-                                    R.string.downloaded_playlist_subtitle,
-                                    downloadedSongCount
-                                ),
-                                onClicked = { onPlaylistPressed(downloadedPlaylistInfo) }
-                            )
-                        }
-
-                        Text(
-                            stringResource(R.string.log_in_message),
-                            textAlign = TextAlign.Center
-                        )
-                        androidx.compose.material3.Button(
-                            onClick = onLogin,
-                            shapes = ButtonDefaults.shapes()
-                        ) {
-                            Text(stringResource(R.string.log_in))
-                        }
-                        FilledTonalButton(
-                            onClick = onSettingsButtonPress,
-                            shapes = ButtonDefaults.shapes()
-                        ) {
-                            Text(stringResource(R.string.open_settings))
+                            Column(
+                                modifier = Modifier.padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Downloading,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(48.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                )
+                                Text(
+                                    text = stringResource(R.string.home_offline_no_downloads),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
                         }
                     }
-
-                    ScreenState.Loading -> LoadingAnimation()
-                    is ScreenState.Error -> ErrorMessage(
-                        ex = uiState.screenState.exception,
-                        onRetry = homeViewModel::getPlaylists
-                    )
-
-                }
-                if (createPlaylistOpen) {
-                    PlaylistCreationDialog(
-                        onClose = { createPlaylistOpen = false },
-                        onConfirm = { title, description, privacy ->
-                            homeViewModel.createPlaylist(title, description, privacy)
-                            createPlaylistOpen = false
-                        })
-
                 }
             }
         }
     }
-
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Hero carousel — auto-sliding, swipeable, with dot indicators
+// Only renders when >=2 items are provided (caller ensures this)
+// ─────────────────────────────────────────────────────────────────────────────
+
 @Composable
-private fun HomeRecommendationRail(
+private fun HeroCarousel(
+    picks: List<Song>,
+    onSongPressed: (Song) -> Unit,
+) {
+    if (picks.size < 2) return
+
+    val pagerState = rememberPagerState(pageCount = { picks.size })
+    var autoScrollEnabled by remember { mutableStateOf(true) }
+
+    // Auto-advance: advance page every [HERO_AUTO_SCROLL_MS]
+    LaunchedEffect(pagerState, autoScrollEnabled) {
+        if (!autoScrollEnabled) return@LaunchedEffect
+        while (true) {
+            delay(HERO_AUTO_SCROLL_MS)
+            val nextPage = (pagerState.currentPage + 1) % picks.size
+            pagerState.animateScrollToPage(nextPage)
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        // Section title
+        Text(
+            text = stringResource(R.string.home_for_you),
+            style = MaterialTheme.typography.titleLarge,
+        )
+
+        // Pager
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(220.dp),
+            contentPadding = PaddingValues(horizontal = 40.dp),
+            pageSpacing = 12.dp,
+        ) { page ->
+            val song = picks[page]
+            // Resume auto-scroll once settled
+            LaunchedEffect(pagerState.settledPage) {
+                autoScrollEnabled = true
+            }
+
+            Card(
+                onClick = { onSongPressed(song) },
+                modifier = Modifier.fillMaxSize(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                )
+            ) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    // Full-bleed artwork
+                    SquareImage(
+                        localPath = song.thumbnailPath,
+                        remoteUrl = song.thumbnailHref,
+                        fallbackUrl = song.thumbnailFallbackUrl,
+                        contentDescription = null,
+                        cornerRadius = 0.dp,
+                        requestSize = 512,
+                        modifier = Modifier.fillMaxSize()
+                    )
+
+                    // Gradient scrim at bottom
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp)
+                            .align(Alignment.BottomCenter)
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.75f))
+                                )
+                            )
+                    )
+
+                    // Song info overlay
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        Text(
+                            text = song.title,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = song.artist,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.85f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+                    // Play button
+                    FilledIconButton(
+                        onClick = { onSongPressed(song) },
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(16.dp)
+                            .size(48.dp),
+                        colors = IconButtonDefaults.filledIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
+                        shape = CircleShape
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.PlayArrow,
+                            contentDescription = stringResource(R.string.play),
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        // Dot indicators
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            repeat(picks.size) { index ->
+                val isSelected = pagerState.currentPage == index
+                Surface(
+                    modifier = Modifier
+                        .padding(horizontal = 3.dp)
+                        .then(
+                            if (isSelected) Modifier.size(width = 20.dp, height = 6.dp)
+                            else Modifier.size(6.dp)
+                        ),
+                    shape = RoundedCornerShape(3.dp),
+                    color = if (isSelected)
+                        MaterialTheme.colorScheme.primary
+                    else
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                ) {}
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shelf rail — titled horizontal row of song cards
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun HomeShelfRail(
+    title: String,
     songs: List<Song>,
-    loading: Boolean,
     onSongPressed: (Song) -> Unit,
 ) {
     Column(
@@ -356,49 +482,48 @@ private fun HomeRecommendationRail(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
-            text = stringResource(R.string.home_recommendations_title),
-            style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(horizontal = 4.dp)
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(horizontal = 16.dp)
         )
 
-        when {
-            loading -> {
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    contentPadding = PaddingValues(horizontal = 4.dp)
-                ) {
-                    items(4) { RecommendationSkeletonCard() }
-                }
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp)
+        ) {
+            items(
+                items = songs,
+                key = { it.youtubeId },
+                contentType = { _ -> "song_card" }
+            ) { song ->
+                RecommendationCard(
+                    song = song,
+                    onClick = { onSongPressed(song) }
+                )
             }
+        }
+    }
+}
 
-            songs.isEmpty() -> {
-                Surface(
-                    color = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = stringResource(R.string.home_recommendations_empty),
-                        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
-                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-            }
-
-            else -> {
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    contentPadding = PaddingValues(horizontal = 4.dp)
-                ) {
-                    items(songs, key = { it.youtubeId }) { song ->
-                        RecommendationCard(
-                            song = song,
-                            onClick = { onSongPressed(song) }
-                        )
-                    }
-                }
-            }
+@Composable
+private fun HomeShelfSkeleton() {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceContainerHighest,
+            shape = RoundedCornerShape(4.dp),
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .width(140.dp)
+                .height(24.dp)
+        ) {}
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp)
+        ) {
+            items(4) { RecommendationSkeletonCard() }
         }
     }
 }
@@ -416,16 +541,13 @@ private fun RecommendationCard(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         )
     ) {
-        // SquareImage owns the whole poster pipeline: sanitized candidate
-        // cycling (local file → API art URL → i.ytimg.com fallback), the
-        // placeholder icon while loading, and the title overlay if every
-        // candidate fails — identical behavior to every other poster in the app.
         SquareImage(
             localPath = song.thumbnailPath,
             remoteUrl = song.thumbnailHref,
             fallbackUrl = song.thumbnailFallbackUrl,
             contentDescription = song.title,
             cornerRadius = 0.dp,
+            requestSize = 256,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(152.dp)
@@ -454,19 +576,19 @@ private fun RecommendationCard(
 @Composable
 private fun RecommendationSkeletonCard() {
     Surface(
-        color = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier.width(152.dp)
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Surface(
-                color = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHighest,
+                color = MaterialTheme.colorScheme.surfaceContainerHighest,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(152.dp)
             ) {}
             Surface(
-                color = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHighest,
+                color = MaterialTheme.colorScheme.surfaceContainerHighest,
                 shape = RoundedCornerShape(4.dp),
                 modifier = Modifier
                     .padding(horizontal = 10.dp)
@@ -474,7 +596,7 @@ private fun RecommendationSkeletonCard() {
                     .height(14.dp)
             ) {}
             Surface(
-                color = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHighest,
+                color = MaterialTheme.colorScheme.surfaceContainerHighest,
                 shape = RoundedCornerShape(4.dp),
                 modifier = Modifier
                     .padding(start = 10.dp, end = 28.dp, bottom = 12.dp)

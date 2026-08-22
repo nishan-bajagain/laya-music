@@ -28,7 +28,6 @@
     <string name="download">Звантажити</string>
     <string name="open_settings">Відкрити налаштування</string>
     <string name="more">більше</string>
-    <string name="join_discord_server">Приєднатися до сервера Discord</string>
     <string name="play_next">Відтворити наступною</string>
     <string name="add_to_queue">Додати до черги</string>
     <string name="retry">Повторити спробу</string>
@@ -36,10 +35,7 @@
     <string name="added_queue_toast">Додано пісню до черги</string>
     <string name="playing_now">Грає зараз</string>
     <string name="up_to_date_message">Додаток в актуальному стані!</string>
-    <string name="update_check_failed">Не вдалося перевірити наявність оновлень</string>
-    <string name="github_rate_limit_retry">GitHub API rate limited. Retry in %1$s.</string>
     <string name="minutes">%1$d хвилин</string>
-    <string name="seconds">%1$d seconds</string>
     <string name="update_available">Доступне оновлення</string>
     <string name="new_version_body">Доступна нова версія (%1$s)</string>
     <string name="log_out">Вийти з системи</string>
@@ -47,12 +43,8 @@
     <string name="app_info">Про додаток</string>
     <string name="check_for_updates">Перевірити наявність оновлень</string>
     <string name="delete_downloads">Видалити всі завантаження</string>
-    <string name="clear_login_info">Очистити інформацію входу</string>
-    <string name="logged_in_message">Ви увійшли в свій акаунт YouTube</string>
-    <string name="logged_out_message">Ви не ввійшли</string>
     <string name="account">Обліковий запис</string>
     <string name="clear_data_message">Видалити всі завантажені пісні і кешовані дані з цього пристрою</string>
-    <string name="clear_login_message">Очищує всі збережені облікові записи та дані входу</string>
     <string name="login_info_cleared">Дані для входу очищено</string>
     <string name="downloads_cleared">Завантаження очищено</string>
     <string name="invalid_navkey">Invalid NavKey : %1$s</string>
@@ -60,10 +52,6 @@
     <string name="cancel">Скасувати</string>
     <string name="remove_local_playlist">Видалити локальний список відтворення</string>
     <string name="remove_local_confirm_text">Видалити завантажені файли для цього списку відтворення? Плейліст залишатиметься в Інтернеті.</string>
-    <string name="ignore">Ігнорувати</string>
-    <string name="change_update_channel">Зміна каналу оновлення</string>
-    <string name="current_update_channel_body">Поточний канал оновлення : %1$s</string>
-    <string name="beta_update_available">Доступне оновлення</string>
     <string name="home">Домашній екран</string>
     <string name="search">Пошук</string>
     <string name="no_results">Нічого не знайдено</string>
@@ -98,11 +86,9 @@
     <string name="delete_playlist">Видалити список відтворення</string>
     <string name="delete_playlist_text">Ви впевнені, що хочете видалити цей список відтворення з Вашого облікового запису YouTube? Цю дію неможливо буде відмінити.</string>
     <string name="check_update_setting_description">Перевіряє оновлення від GitHub</string>
-    <string name="updates">Оновлення</string>
     <string name="current_version">Поточна версія</string>
     <string name="visibility">Видимість</string>
     <string name="auto_update_title">Автоматична перевірка оновлень</string>
-    <string name="auto_update_subtitle">Дозволяє перевірити наявність оновлень автоматично при запуску програми</string>
     <string name="sleep_timer">Таймер сну</string>
     <string name="sleep_timer_active">Таймер сну активний</string>
     <string name="sleep_timer_remaining">залишилось</string>

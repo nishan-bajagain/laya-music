@@ -28,7 +28,6 @@
     <string name="download">تنزيل</string>
     <string name="open_settings">فتح الإعدادات</string>
     <string name="more">المزيد</string>
-    <string name="join_discord_server">الانضمام إلى خادم ديسكورد</string>
     <string name="play_next">تشغيل التالي</string>
     <string name="add_to_queue">إضافة إلى قائمة الانتظار</string>
     <string name="retry">إعادة المحاولة</string>
@@ -36,10 +35,7 @@
     <string name="added_queue_toast">تم إضافة الأغنية إلى قائمة الانتظار</string>
     <string name="playing_now">تشغيل الآن</string>
     <string name="up_to_date_message">التطبيق محدث!</string>
-    <string name="update_check_failed">فشل التحقق من وجود تحديثات</string>
-    <string name="github_rate_limit_retry">معدل API GitHub محدود. أعد المحاولة في %1$s.</string>
     <string name="minutes">%1$d دقيقة</string>
-    <string name="seconds">%1$d ثواني</string>
     <string name="update_available">تحديث متوفر</string>
     <string name="new_version_body">نسخة جديدة متوفرة. (%1$s)</string>
     <string name="log_out">تسجيل الخروج</string>
@@ -47,12 +43,8 @@
     <string name="app_info">معلومات التطبيق</string>
     <string name="check_for_updates">التحقق من وجود تحديثات</string>
     <string name="delete_downloads">حذف جميع التنزيلات</string>
-    <string name="clear_login_info">مسح معلومات تسجيل الدخول</string>
-    <string name="logged_in_message">أنت مسجل الدخول إلى حسابك على اليوتيوب</string>
-    <string name="logged_out_message">أنت حاليا غير مسجل الدخول</string>
     <string name="account">حساب</string>
     <string name="clear_data_message">إزالة جميع الأغاني المحملة والبيانات المخزنة مؤقتاً من هذا الجهاز</string>
-    <string name="clear_login_message">مسح جميع الحسابات المحفوظة ومعلومات تسجيل الدخول</string>
     <string name="login_info_cleared">مسح معلومات تسجيل الدخول</string>
     <string name="downloads_cleared">تم مسح التنزيلات</string>
     <string name="invalid_navkey">NavKey غير صالح: %1$s</string>
@@ -60,10 +52,6 @@
     <string name="cancel">إلغاء</string>
     <string name="remove_local_playlist">إزالة قائمة التشغيل المحلية</string>
     <string name="remove_local_confirm_text">حذف الملفات التي تم تنزيلها لقائمة التشغيل هذه؟ ستظل قائمة التشغيل متاحة على الإنترنت.</string>
-    <string name="ignore">تجاهل</string>
-    <string name="change_update_channel">تغيير قناة التحديث</string>
-    <string name="current_update_channel_body">قناة التحديث الحالية: %1$s</string>
-    <string name="beta_update_available">تحديث بيتا متوفر</string>
     <string name="home">المنزل</string>
     <string name="search">البحث</string>
     <string name="no_results">لا توجد نتائج</string>
@@ -98,11 +86,9 @@
     <string name="delete_playlist">حذف قائمة التشغيل</string>
     <string name="delete_playlist_text">هل أنت متأكد من أنك تريد حذف قائمة التشغيل هذه من حساب اليوتيوب الخاص بك؟ لا يمكن عكس هذا الإجراء.</string>
     <string name="check_update_setting_description">التحقق من وجود تحديثات جديدة من GitHub</string>
-    <string name="updates">التحديثات</string>
     <string name="current_version">الإصدار الحالي</string>
     <string name="visibility">الظهور</string>
     <string name="auto_update_title">التحقق التلقائي من التحديث</string>
-    <string name="auto_update_subtitle">تمكين التحقق من التحديث تلقائياً عند تشغيل التطبيق</string>
     <string name="sleep_timer">مؤقت النوم</string>
     <string name="sleep_timer_active">مؤقت النوم نشط</string>
     <string name="sleep_timer_remaining">تبقى</string>

@@ -69,7 +69,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 val (name, email, avatarUrl) = AccountInfoHelper.parseAccountInfo(responseJson)
                 if (name.isNotBlank() || email.isNotBlank() || avatarUrl.isNotBlank()) {
                     datastoreRepository.saveAccountInfo(name, email, avatarUrl)
-                    printd("Account info saved: name=$name email=$email")
+                    printd("Account info saved: name=$name email=$email avatarUrl=${avatarUrl.take(80)}...")
                 }
             } catch (e: Exception) {
                 printe("Failed to fetch account info: ${e.message}", exception = e)

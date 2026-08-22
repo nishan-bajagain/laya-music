@@ -48,12 +48,8 @@
     <string name="data_and_storage"><![CDATA[Data & Storage]]></string>
     <string name="app_info">App Info</string>
     <string name="delete_downloads">Delete all downloads</string>
-    <string name="clear_login_info">Clear login info</string>
-    <string name="logged_in_message">You are logged in to your YouTube account</string>
-    <string name="logged_out_message">You are currently not logged in</string>
     <string name="account">Account</string>
     <string name="clear_data_message">Remove all downloaded songs and cached data from this device</string>
-    <string name="clear_login_message">Clears all the saved accounts and login information</string>
     <string name="login_info_cleared">Login Info Cleared</string>
     <string name="downloads_cleared">Downloads Cleared</string>
     <string name="invalid_navkey">Invalid NavKey : %1$s</string>
@@ -61,11 +57,12 @@
     <string name="cancel">Cancel</string>
     <string name="remove_local_playlist">Remove local playlist</string>
     <string name="remove_local_confirm_text">Delete the downloaded files for this playlist? The playlist will remain available online.</string>
-    <string name="ignore">Ignore</string>
     <string name="webm_extension" translatable="false">%1$s.webm</string>
     <string name="jpg_extension" translatable="false">%1$s.jpg</string>
     <string name="home">Home</string>
+    <string name="profile">Profile</string>
     <string name="search">Search</string>
+    <string name="library">Library</string>
     <string name="search_subtitle">Find songs, artists, albums, and playlists</string>
     <string name="search_results_count">%1$d results</string>
     <string name="no_results">No Results</string>
@@ -108,7 +105,6 @@
     <string name="sleep_timer_end_of_song_btn">End of Song</string>
     <string name="sleep_timer_start">Start Timer</string>
     <string name="playback_speed">Playback Speed</string>
-    <string name="playback_speed_label" translatable="false">%1$.1fx</string>
     <string name="kbps" translatable="false">%d kbps</string>
     <string name="khz" translatable="false">%.1f kHz</string>
     <string name="unlike">Unlike</string>
@@ -144,10 +140,7 @@
     <string name="about_laya_subtitle">Developer, version, and app info</string>
     <string name="donate_title">Support Laya</string>
     <string name="donate_subtitle">Help keep the project going ☕</string>
-    <string name="donate_url" translatable="false">https://ko-fi.com/nishan_bajagain</string>
-    <string name="github_url" translatable="false">https://github.com/ilianokokoro/umihi</string>
     <string name="view_on_github">View on GitHub</string>
-    <string name="app_description">A beautiful open-source music player powered by YouTube Music. Play, download, and enjoy your tunes — even offline.</string>
     <string name="welcome_to_laya">Welcome to Laya</string>
     <string name="welcome_message">Laya is a free, open-source music player that connects to YouTube Music. Search songs, download them for offline play, and enjoy time-synced lyrics.\n\nNo account required to listen. Sign in with YouTube to access your playlists.</string>
     <string name="get_started">Get Started</string>
@@ -157,36 +150,36 @@
     <string name="recommendations_title">Recommended for You</string>
     <string name="home_recommendations_title">Picked for you</string>
     <string name="home_recommendations_empty">Play a song or download music to build your recommendations.</string>
+    <string name="home_offline_mode">You\u2019re offline — showing downloaded songs</string>
+    <string name="home_offline_no_downloads">You\u2019re offline and don\u2019t have any downloaded songs. Connect to the internet or download some music to listen offline.</string>
+    <string name="home_downloaded">Downloaded</string>
+    <string name="home_daily_mix_title">Daily Mix</string>
+    <string name="home_trending_title">Trending</string>
+    <string name="home_popular_title">Popular</string>
+    <string name="home_most_listened_title">Most Listened</string>
+    <string name="home_liked_songs_title">Liked Songs</string>
+    <string name="home_rail_empty">No songs available in this section</string>
+    <string name="home_hero_play">Play</string>
+    <string name="home_for_you">For You</string>
+    <string name="home_recently_played">Recently Played</string>
+    <string name="home_login_for_liked">Log in to see your liked songs</string>
     <string name="no_recommendations">Play or download songs to get personalised recommendations</string>
     <string name="start_listening">Start listening…</string>
-    <string name="no_local_playlists">No playlists are saved locally. Open a YouTube Music playlist first to make it available here.</string>
     <string name="download_location">Download Location</string>
-    <string name="download_location_description">Choose where music files are saved on this device</string>
     <string name="internal_storage">Internal Storage</string>
-    <string name="external_storage">External Storage</string>
-    <string name="sd_card">SD Card</string>
     <string name="choose_storage">Choose Storage Location</string>
     <string name="storage_change_warning_title">Change Storage Location?</string>
     <string name="storage_change_warning_text">Your existing downloads will stay at the old location and will not be moved. You may need to re-download your music in the new location. Files at the old location will remain on your device until you delete them manually.</string>
     <string name="storage_switch_anyway">Switch Anyway</string>
     <string name="waiting_for_wifi_to_download">Waiting for Wi-Fi to download %1$s</string>
     <!-- Legacy update-checker strings — kept for translation-file consistency; not shown in UI -->
-    <string name="updates">Updates</string>
     <string name="check_for_updates">Check for updates</string>
     <string name="auto_update_title">Automatic updates</string>
-    <string name="auto_update_subtitle">Automatically install new versions</string>
     <string name="update_available">Update available</string>
-    <string name="beta_update_available">Beta update available</string>
     <string name="new_version_body">A new version of Laya is available</string>
     <string name="up_to_date_message">Laya is up to date</string>
-    <string name="update_check_failed">Failed to check for updates</string>
     <string name="downloading_update">Downloading update…</string>
-    <string name="change_update_channel">Change update channel</string>
-    <string name="current_update_channel_body">Current channel: stable</string>
     <string name="check_update_setting_description">Check for new versions on startup</string>
-    <string name="github_rate_limit_retry">GitHub rate limit hit — try again later</string>
-    <string name="join_discord_server">Join the Discord server</string>
-    <string name="seconds">%1$d seconds</string>
 
     <!-- App self-update (GitHub Releases flavor) -->
     <string name="update_now">Update now</string>
@@ -207,37 +200,48 @@
     <!-- Signature-mismatch migration (one-time v1.0.3 debug-key builds) -->
     <string name="update_signature_mismatch_title">"Update can't be installed directly"</string>
     <string name="update_signature_mismatch_body">This update was signed with a different key than the version installed on your device. For security, Android cannot replace an app with one from a different certificate, so a one-time uninstall is required.</string>
-    <string name="update_signature_mismatch_steps">1. Tap Back up data to save your playlists, settings and downloads
-2. Tap Uninstall Laya Music
-3. Install the new version from the download or notification, then restore your data from Settings - Data &amp; Storage</string>
+
     <string name="uninstall_laya_music">Uninstall Laya Music</string>
     <string name="uninstall_manual_hint">Could not open the uninstaller. Please uninstall Laya Music from Settings - Apps</string>
-    <string name="backup_data">Back up data</string>
-    <string name="backup_data_subtitle">Save playlists, settings, login and downloads to a file</string>
-    <string name="backup_in_progress">Backing up…</string>
-    <string name="backup_success">Backup saved. After reinstalling, use Restore data from Settings</string>
-    <string name="backup_failed">Backup failed. Please try again</string>
-    <string name="restore_data">Restore data</string>
-    <string name="restore_data_subtitle">Restore from a backup file - the app will restart</string>
-    <string name="restore_success">Data restored - restarting…</string>
-    <string name="restore_failed">Restore failed. The file may be corrupted or from a different app</string>
+
 
     <!-- Lyrics -->
     <string name="lyrics">Lyrics</string>
-    <string name="lyrics_unavailable">Lyrics unavailable</string>
-    <string name="lyrics_loading">Loading lyrics…</string>
     <string name="lyrics_loading_cache">Checking cache…</string>
     <string name="lyrics_loading_synced">Searching for synced lyrics…</string>
     <string name="lyrics_error">Failed to load lyrics</string>
     <string name="lyrics_retry">Retry</string>
     <string name="lyrics_synced">Live synced lyrics</string>
-    <string name="lyrics_plain">Plain text</string>
-    <string name="lyrics_translation">Translation</string>
     <string name="lyrics_not_found">No lyrics found for this track</string>
     <string name="lyrics_instrumental">This track is instrumental</string>
-    <string name="lyrics_offline">You\'re offline — no cached lyrics for this track</string>
     <string name="lyrics_rate_limited">Lyrics service is busy — try again shortly</string>
     <string name="lyrics_jump_to_current">Jump to current lyric</string>
     <string name="pause">Pause</string>
     <string name="repeat">Repeat</string>
+
+    <!-- Content descriptions -->
+    <string name="cd_back">Back</string>
+    <string name="cd_profile">Profile</string>
+    <string name="cd_profile_picture">Profile picture</string>
+    <string name="cd_explicit">Explicit</string>
+
+    <!-- Profile screen -->
+    <string name="profile_display_name">Display Name</string>
+    <string name="profile_email">Email</string>
+    <string name="profile_connected_service">Connected Service</string>
+    <string name="profile_youtube_music">YouTube Music</string>
+    <string name="profile_not_logged_in">Not logged in</string>
+    <string name="profile_sign_in">Sign In</string>
+    <string name="profile_sign_in_description">Sign in with your YouTube account to access your playlists and profile.</string>
+    <string name="profile_sign_out_description">Sign out of your YouTube account</string>
+
+    <!-- Donation screen -->
+    <string name="donate_description">Laya is free and open-source.\nIf you enjoy it, consider supporting the development!</string>
+    <string name="donate_kofi_title">Ko-fi — Buy me a coffee</string>
+    <string name="donate_kofi_description">A quick, one-time way to say thanks. Every coffee helps keep Laya ad-free and open-source.</string>
+    <string name="donate_kofi_button">Support on Ko-fi</string>
+    <string name="donate_github_title">GitHub Sponsors</string>
+    <string name="donate_github_description">Sponsor the project on GitHub — monthly or one-time. Perfect for long-time supporters.</string>
+    <string name="donate_github_button">Sponsor on GitHub</string>
+    <string name="donate_thank_you">Thank you for your support! ♥</string>
 </resources>

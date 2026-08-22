@@ -7,13 +7,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import ca.ilianokokoro.umihi.music.R
 
 @Composable
 fun ExplicitBadge(modifier: Modifier = Modifier) {
     Icon(
         painter = painterResource(R.drawable.explicit),
-        contentDescription = "Explicit",
+        contentDescription = stringResource(R.string.cd_explicit),
         modifier = Modifier.size(20.dp),
         tint = MaterialTheme.colorScheme.onSurfaceVariant
     )

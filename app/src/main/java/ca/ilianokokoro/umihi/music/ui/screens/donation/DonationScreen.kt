@@ -65,12 +65,12 @@ fun DonationScreen(onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Support Laya") },
+                title = { Text(stringResource(R.string.donate_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.cd_back)
                         )
                     }
                 }
@@ -99,13 +99,13 @@ fun DonationScreen(onBack: () -> Unit) {
                         modifier = Modifier.size(56.dp)
                     )
                     Text(
-                        text = "Support Laya",
+                        text = stringResource(R.string.donate_title),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "Laya is free and open-source.\nIf you enjoy it, consider supporting the development!",
+                        text = stringResource(R.string.donate_description),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
@@ -131,13 +131,13 @@ fun DonationScreen(onBack: () -> Unit) {
                         style = MaterialTheme.typography.displayMedium,
                     )
                     Text(
-                        text = "Ko-fi — Buy me a coffee",
+                        text = stringResource(R.string.donate_kofi_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "A quick, one-time way to say thanks. Every coffee helps keep Laya ad-free and open-source.",
+                        text = stringResource(R.string.donate_kofi_description),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
@@ -160,7 +160,7 @@ fun DonationScreen(onBack: () -> Unit) {
                             modifier = Modifier.padding(vertical = 4.dp)
                         ) {
                             Icon(Icons.AutoMirrored.Outlined.OpenInNew, contentDescription = null)
-                            Text("Support on Ko-fi", style = MaterialTheme.typography.labelLarge)
+                            Text(stringResource(R.string.donate_kofi_button), style = MaterialTheme.typography.labelLarge)
                         }
                     }
                 }
@@ -186,13 +186,13 @@ fun DonationScreen(onBack: () -> Unit) {
                         modifier = Modifier.size(40.dp)
                     )
                     Text(
-                        text = "GitHub Sponsors",
+                        text = stringResource(R.string.donate_github_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Sponsor the project on GitHub — monthly or one-time. Perfect for long-time supporters.",
+                        text = stringResource(R.string.donate_github_description),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
@@ -212,7 +212,7 @@ fun DonationScreen(onBack: () -> Unit) {
                             modifier = Modifier.padding(vertical = 4.dp)
                         ) {
                             Icon(Icons.AutoMirrored.Outlined.OpenInNew, contentDescription = null)
-                            Text("Sponsor on GitHub", style = MaterialTheme.typography.labelLarge)
+                            Text(stringResource(R.string.donate_github_button), style = MaterialTheme.typography.labelLarge)
                         }
                     }
                 }
@@ -221,7 +221,7 @@ fun DonationScreen(onBack: () -> Unit) {
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = "Thank you for your support! ♥",
+                text = stringResource(R.string.donate_thank_you),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center

@@ -140,13 +140,17 @@ object UpdateManager {
             val now = System.currentTimeMillis()
             val lastCheckMs = repo.getLastUpdateCheckMs()
 
+            LogHelper.printd("UpdateManager: runUpdateCheck force=$force lastCheckMs=$lastCheckMs elapsedMs=${now - lastCheckMs} autoCheck=${repo.getSettings().autoCheckForUpdates}")
+
             if (!force) {
                 // Auto-check only runs when the user opted in and the throttle
                 // interval has elapsed since the last check.
                 if (!repo.getSettings().autoCheckForUpdates) {
+                    LogHelper.printd("UpdateManager: skipping — autoCheckForUpdates=false")
                     return UpdateCheckResult.UP_TO_DATE
                 }
                 if (now - lastCheckMs < Constants.Update.MIN_RECHECK_INTERVAL_MS) {
+                    LogHelper.printd("UpdateManager: skipping — throttle active (${(now - lastCheckMs) / 3600_000}h/${Constants.Update.MIN_RECHECK_INTERVAL_MS / 3600_000}h)")
                     return UpdateCheckResult.UP_TO_DATE
                 }
             } else if (now - lastCheckMs < Constants.Update.MIN_MANUAL_RECHECK_MS) {
@@ -165,23 +169,30 @@ object UpdateManager {
                     repo.saveLastUpdateResponse(fetch.rawBody)
 
                     val info = fetch.info
+                    LogHelper.printd("UpdateManager: fetched tag=${info.version} local=${BuildConfig.VERSION_NAME}")
                     if (!isNewerVersion(info.version, BuildConfig.VERSION_NAME)) {
+                        LogHelper.printd("UpdateManager: up to date (remote ${info.version} <= local ${BuildConfig.VERSION_NAME})")
                         return UpdateCheckResult.UP_TO_DATE
                     }
 
                     // Never resurface the popup for a version the user skipped, but do
                     // resurface it once an even newer version is published.
                     if (repo.getSettings().dismissedUpdateVersion == info.version) {
+                        LogHelper.printd("UpdateManager: version ${info.version} was dismissed")
                         return UpdateCheckResult.UP_TO_DATE
                     }
 
+                    LogHelper.printd("UpdateManager: update available — ${info.version}")
                     _availableUpdate.value = info
                     UpdateCheckResult.UPDATE_AVAILABLE
                 }
 
                 // No releases, a release without the APK asset, or a tag we
                 // can't compare — never an error, just nothing to install.
-                ReleaseFetchResult.NoInstallableRelease -> UpdateCheckResult.UP_TO_DATE
+                ReleaseFetchResult.NoInstallableRelease -> {
+                    LogHelper.printd("UpdateManager: no installable release found (missing asset or unparseable tag)")
+                    UpdateCheckResult.UP_TO_DATE
+                }
 
                 ReleaseFetchResult.RateLimited -> {
                     // GitHub said stop — back off the auto-check and answer from

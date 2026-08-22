@@ -84,6 +84,15 @@ class MusicApplication : Application(), SingletonImageLoader.Factory {
         // Initialize NewPipe here so it is ready before any service or
         // background task attempts to resolve a YouTube stream URL.
         NewPipe.init(YoutubeExtractor())
+
+        // Explicitly register the custom ImageLoader with Coil's global singleton.
+        // The SingletonImageLoader.Factory interface on Application should auto-detect
+        // this, but some Coil 3.x builds have edge cases where the factory isn't
+        // called if coil-network-okhttp's ContentProvider initialises first. Setting
+        // it explicitly guarantees every AsyncImage in the app uses our imageClient
+        // (with the browser User-Agent that Google CDNs require) rather than a bare
+        // default OkHttpClient that would 403 the request.
+        SingletonImageLoader.setSafe { newImageLoader(this@MusicApplication) }
     }
 }
 

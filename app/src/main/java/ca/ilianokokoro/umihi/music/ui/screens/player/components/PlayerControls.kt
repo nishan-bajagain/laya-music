@@ -37,7 +37,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,7 +80,7 @@ fun PlayerControls(
         List(5) { ComposeHelper.rememberInteractionSource() }
 
     val hapticFeedback = LocalHapticFeedback.current
-    val player by PlayerManager.controllerState.collectAsState()
+    val player by PlayerManager.controllerState.collectAsStateWithLifecycle()
     val repeatMode = ComposeHelper.rememberRepeatMode(player)
 
     Column(

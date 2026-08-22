@@ -7,7 +7,6 @@ import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -37,6 +36,7 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -94,7 +94,9 @@ fun PlayerScreen(
 
     // Global playlist membership
     val memberIds by PlaylistMembership.memberIds.collectAsStateWithLifecycle()
-    val isCurrentSongInPlaylist = currentSong?.youtubeId?.let { it in memberIds } == true
+    val isCurrentSongInPlaylist = remember(currentSong?.youtubeId, memberIds) {
+        currentSong?.youtubeId?.let { it in memberIds } == true
+    }
 
     // Sheet state for playlist management / add-to-playlist
     var showManagementSheet by remember { mutableStateOf(false) }
@@ -372,24 +374,19 @@ fun Thumbnail(
     title: String? = null,
     modifier: Modifier = Modifier
 ) {
-    BoxWithConstraints(
-        modifier = modifier.padding(20.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        val size = minOf(maxWidth, maxHeight)
-
-        SquareImage(
-            // Queue songs come from MediaItems and never carry a local thumbnail
-            // path, so only the remote URL is available here.
-            remoteUrl = href,
-            fallbackUrl = fallbackUrl,
-            contentDescription = title,
-            // Near-fullscreen art: decode at 1024 instead of the 256px list
-            // default so the poster stays sharp instead of pixelated.
-            requestSize = 1024,
-            modifier = Modifier.size(size)
-        )
-    }
+    // Use aspectRatio(1f) instead of BoxWithConstraints to avoid the
+    // double-measurement pass. BoxWithConstraints forces two layout passes
+    // (one to measure constraints, one to lay out children); an aspect ratio
+    // modifier achieves the same square art in a single pass.
+    SquareImage(
+        remoteUrl = href,
+        fallbackUrl = fallbackUrl,
+        contentDescription = title,
+        requestSize = 1024,
+        modifier = modifier
+            .padding(20.dp)
+            .aspectRatio(1f)
+    )
 }
 
 @Composable

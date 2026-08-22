@@ -305,37 +305,22 @@ class PlayerViewModel(application: Application) :
     }
 
     private fun updateIsLoadingState() {
-        viewModelScope.launch {
-            when (PlayerManager.playbackState) {
-                Player.STATE_BUFFERING -> {
-                    _uiState.update {
-                        it.copy(
-                            isLoading = true
-                        )
-                    }
-                }
-
-                Player.STATE_READY -> {
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false
-                        )
-                    }
-                }
-
-                else -> {
-                }
-            }
+        // No coroutine needed: read from PlayerManager synchronously and
+        // update the StateFlow only when the value actually changes.
+        val isBuffering = PlayerManager.playbackState == Player.STATE_BUFFERING
+        val isReady = PlayerManager.playbackState == Player.STATE_READY
+        if (isBuffering && !_uiState.value.isLoading) {
+            _uiState.update { it.copy(isLoading = true) }
+        } else if (isReady && _uiState.value.isLoading) {
+            _uiState.update { it.copy(isLoading = false) }
         }
     }
 
     private fun updateIsPlayingState() {
-        viewModelScope.launch {
-            _uiState.update {
-                it.copy(
-                    isPlaying = PlayerManager.isPlaying
-                )
-            }
+        // Direct update — avoids an unnecessary coroutine launch per callback.
+        val playing = PlayerManager.isPlaying
+        if (playing != _uiState.value.isPlaying) {
+            _uiState.update { it.copy(isPlaying = playing) }
         }
     }
 

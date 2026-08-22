@@ -49,6 +49,7 @@ import ca.ilianokokoro.umihi.music.data.repositories.PlaylistRepository
 import ca.ilianokokoro.umihi.music.data.repositories.SongRepository
 import ca.ilianokokoro.umihi.music.extensions.cappedTo
 import ca.ilianokokoro.umihi.music.models.PlaybackAudioInfo
+import ca.ilianokokoro.umihi.music.data.database.AppDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -195,6 +196,15 @@ class PlaybackService : MediaLibraryService() {
             ) {
                 PlayerManager.updatePlaybackInfo(PlaybackAudioInfo())
                 updateCurrentMediaItemThumbnail(mediaItem)
+                // Track play count for Most Listened rail on Home
+                mediaItem?.mediaId?.takeIf { it.isNotBlank() }?.let { songId ->
+                    kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                        try {
+                            AppDatabase.getInstance(applicationContext).songRepository()
+                                .incrementPlayCount(songId)
+                        } catch (_: Exception) { /* best-effort */ }
+                    }
+                }
             }
 
             override fun onPlayerError(error: PlaybackException) {

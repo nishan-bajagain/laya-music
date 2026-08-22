@@ -28,7 +28,6 @@
     <string name="download">Descarregar</string>
     <string name="open_settings">Obre la configuració</string>
     <string name="more">més</string>
-    <string name="join_discord_server">Uneix-te al servidor de Discord</string>
     <string name="play_next">Reprodueix la següent</string>
     <string name="add_to_queue">Afegeix a la cua</string>
     <string name="retry">Reintentar</string>
@@ -36,10 +35,7 @@
     <string name="added_queue_toast">S’ha afegit la cançó a la cua de reproducció</string>
     <string name="playing_now">Reproduint ara</string>
     <string name="up_to_date_message">L’aplicació està actualitzada!</string>
-    <string name="update_check_failed">No s’ha pogut comprovar si hi ha actualitzacions</string>
-    <string name="github_rate_limit_retry">GitHub API rate limited. Retry in %1$s.</string>
     <string name="minutes">%1$d minutes</string>
-    <string name="seconds">%1$d seconds</string>
     <string name="update_available">Actualització Disponible</string>
     <string name="new_version_body">Hi ha disponible una nova versió. (%1$s)</string>
     <string name="log_out">Tanca la sessió</string>
@@ -47,12 +43,8 @@
     <string name="app_info">Informació de l\'aplicació</string>
     <string name="check_for_updates">Comprovar actualitzacions</string>
     <string name="delete_downloads">Suprimeix la baixada</string>
-    <string name="clear_login_info">Neteja la informació d’inici de sessió</string>
-    <string name="logged_in_message">Ja tens la sessió iniciada al teu compte de YouTube</string>
-    <string name="logged_out_message">Actualment no heu iniciat sessió</string>
     <string name="account">Compte</string>
     <string name="clear_data_message">Esborra totes les cançons descarregades i la memòria cau</string>
-    <string name="clear_login_message">Esborra tots els comptes guardats i la informació d’inici de sessió</string>
     <string name="login_info_cleared">Informació d’inici de sessió netejada</string>
     <string name="downloads_cleared">Descàrregues netejades</string>
     <string name="invalid_navkey">Clau de navegació no vàlida: %1$s</string>
@@ -60,10 +52,6 @@
     <string name="cancel">Cancel·la</string>
     <string name="remove_local_playlist">Esborra la llista de reproducció local</string>
     <string name="remove_local_confirm_text">Esborrar els fitxers descarregats d’aquesta llista de reproducció? La llista de reproducció continuarà estant disponible en línia.</string>
-    <string name="ignore">Ignorar</string>
-    <string name="change_update_channel">Canvia el canal d’actualitzacions</string>
-    <string name="current_update_channel_body">Canal d’actualització actual: %1$s</string>
-    <string name="beta_update_available">Hi ha disponible una actualització beta</string>
     <string name="home">Inici</string>
     <string name="search">Cercar</string>
     <string name="no_results">No hi ha resultats</string>
@@ -98,11 +86,9 @@
     <string name="delete_playlist">Delete Playlist</string>
     <string name="delete_playlist_text">Are you sure you want to delete this playlist from your YouTube Account ? This action cannot be reversed.</string>
     <string name="check_update_setting_description">Checks for new updates from GitHub</string>
-    <string name="updates">Updates</string>
     <string name="current_version">Current Version</string>
     <string name="visibility">Visibility</string>
     <string name="auto_update_title">Automatic Update Checking</string>
-    <string name="auto_update_subtitle">Enables checking for update automatically on app launch</string>
     <string name="sleep_timer">Sleep Timer</string>
     <string name="sleep_timer_active">Sleep Timer Active</string>
     <string name="sleep_timer_remaining">remaining</string>

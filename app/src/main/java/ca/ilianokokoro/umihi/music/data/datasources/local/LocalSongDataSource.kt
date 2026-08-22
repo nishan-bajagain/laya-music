@@ -99,4 +99,17 @@ interface LocalSongDataSource {
     @Delete
     suspend fun delete(song: Song)
 
+    /** Increment the play count for a song. Inserts the song row if it doesn't exist. */
+    @Query("UPDATE songs SET playCount = playCount + 1 WHERE youtubeId = :songId")
+    suspend fun incrementPlayCount(songId: String)
+
+    /** Return the most-played songs (for the Most Listened rail on Home). */
+    @Query("""
+        SELECT * FROM songs
+        WHERE playCount > 0
+        ORDER BY playCount DESC
+        LIMIT :limit
+    """)
+    suspend fun getMostListenedSongs(limit: Int = 15): List<Song>
+
 }

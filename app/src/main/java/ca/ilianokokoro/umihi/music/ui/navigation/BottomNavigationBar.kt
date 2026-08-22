@@ -6,6 +6,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
@@ -65,6 +66,20 @@ fun BottomNavigationBar(
                 )
             },
             label = { Text(stringResource(R.string.search)) }
+        )
+        NavigationBarItem(
+            selected = currentTab is LibraryScreenKey,
+            onClick = {
+                onTabSelected(LibraryScreenKey)
+                clickCount.intValue = 0
+            },
+            icon = {
+                androidx.compose.material3.Icon(
+                    Icons.Default.LibraryMusic,
+                    contentDescription = null
+                )
+            },
+            label = { Text(stringResource(R.string.library)) }
         )
         NavigationBarItem(
             selected = currentTab is SettingsScreenKey,

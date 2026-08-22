@@ -892,6 +892,9 @@ object YoutubeDataExtractor {
      */
     fun extractHomeRecommendations(jsonString: String): List<Song> =
         ca.ilianokokoro.umihi.music.core.youtube.extractHomeRecommendations(jsonString)
+
+    fun extractHomeShelves(jsonString: String): List<HomeShelf> =
+        ca.ilianokokoro.umihi.music.core.youtube.extractHomeShelves(jsonString)
 }
 
 
@@ -996,6 +999,82 @@ private fun extractHomeSong(item: JsonElement): Song? {
         duration = "",
         thumbnailHref = YoutubeDataExtractor.getBestThumbnailUrl(twoRow["thumbnailRenderer"] ?: return null)
     )
+}
+
+data class HomeShelf(
+    val title: String,
+    val songs: List<Song>,
+)
+
+/**
+ * Extract named shelves from the YouTube Music home feed, returning each shelf
+ * with its title intact. This powers the multi-rail Home UI.
+ *
+ * YouTube Music's home response organizes songs into `musicCarouselShelfRenderer`
+ * sections, each optionally carrying a `header` → `musicCarouselShelfBasicHeaderRenderer`
+ * → `title` → `runs[0].text` (or just `title.simpleText`).
+ *
+ * Falls back to the old flat `extractHomeRecommendations` for shelves that fail to parse.
+ */
+fun extractHomeShelves(jsonString: String): List<HomeShelf> {
+    return try {
+        val json = Json.parseToJsonElement(jsonString).jsonObject
+        val shelves = mutableListOf<HomeShelf>()
+        val seenIds = mutableSetOf<String>()
+
+        val sectionContents = json["contents"]
+            ?.safeObject()?.get("singleColumnBrowseResultsRenderer")
+            ?.safeObject()?.get("tabs")
+            ?.safeArray()?.firstOrNull()
+            ?.safeObject()?.get("tabRenderer")
+            ?.safeObject()?.get("content")
+            ?.safeObject()?.get("sectionListRenderer")
+            ?.safeObject()?.get("contents")
+            ?.safeArray() ?: return emptyList()
+
+        for (section in sectionContents) {
+            val shelf = section.safeObject()?.get("musicCarouselShelfRenderer")?.safeObject()
+                ?: section.safeObject()?.get("musicShelfRenderer")?.safeObject()
+                ?: continue
+
+            // Extract shelf title
+            val title = extractShelfTitle(shelf)
+            if (title.isBlank()) continue
+
+            val items = shelf["contents"]?.safeArray() ?: continue
+            val songs = mutableListOf<Song>()
+            for (item in items) {
+                val song = extractHomeSong(item) ?: continue
+                if (song.youtubeId !in seenIds) {
+                    seenIds.add(song.youtubeId)
+                    songs.add(song)
+                }
+            }
+            if (songs.isNotEmpty()) {
+                shelves.add(HomeShelf(title = title, songs = songs))
+            }
+        }
+        shelves
+    } catch (e: Exception) {
+        printe("extractHomeShelves failed: ${e.message}", exception = e)
+        emptyList()
+    }
+}
+
+/**
+ * Extract the title text from a shelf's header renderer.
+ * YT Music uses two header patterns:
+ * - `header` → `musicCarouselShelfBasicHeaderRenderer` → `title` → `runs[0].text`
+ * - `header` → `musicCarouselShelfBasicHeaderRenderer` → `title` → `simpleText`
+ */
+private fun extractShelfTitle(shelf: JsonObject): String {
+    val header = shelf["header"]?.safeObject() ?: return ""
+    val titleObj = header["musicCarouselShelfBasicHeaderRenderer"]?.safeObject()
+        ?.get("title")?.safeObject() ?: return ""
+    return titleObj["runs"]?.safeArray()
+        ?.firstOrNull()?.safeObject()?.get("text")?.jsonPrimitive?.contentOrNull
+        ?: titleObj["simpleText"]?.jsonPrimitive?.contentOrNull
+        ?: ""
 }
 
 enum class SongInfoType(val index: Int) {

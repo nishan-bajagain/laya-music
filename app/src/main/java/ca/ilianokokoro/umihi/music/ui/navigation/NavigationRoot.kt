@@ -4,8 +4,6 @@ import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -62,7 +60,6 @@ import ca.ilianokokoro.umihi.music.R
 import ca.ilianokokoro.umihi.music.core.Constants
 import ca.ilianokokoro.umihi.music.core.ImageErrorLog
 import ca.ilianokokoro.umihi.music.core.helpers.LogHelper.printe
-import ca.ilianokokoro.umihi.music.core.managers.DataBackupManager
 import ca.ilianokokoro.umihi.music.core.managers.UpdateManager
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository
 import ca.ilianokokoro.umihi.music.ui.components.dialog.SignatureMismatchDialog
@@ -74,6 +71,7 @@ import ca.ilianokokoro.umihi.music.ui.screens.about.AboutScreen
 import ca.ilianokokoro.umihi.music.ui.screens.auth.AuthScreen
 import ca.ilianokokoro.umihi.music.ui.screens.donation.DonationScreen
 import ca.ilianokokoro.umihi.music.ui.screens.home.HomeScreen
+import ca.ilianokokoro.umihi.music.ui.screens.library.LibraryScreen
 import ca.ilianokokoro.umihi.music.ui.screens.player.PlayerScreen
 import ca.ilianokokoro.umihi.music.ui.screens.playlist.PlaylistScreen
 import ca.ilianokokoro.umihi.music.ui.screens.profile.ProfileScreen
@@ -107,28 +105,7 @@ fun NavigationRoot(
     val screenConfig = rememberScreenUiConfig(currentScreen)
 
     var showFullPlayer by remember { mutableStateOf(false) }
-    // State for the guided one-time migration (v1.0.3 debug-key builds):
-    // backing up app data before the required uninstall/reinstall.
-    var backupInProgress by remember { mutableStateOf(false) }
-    val backupLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.CreateDocument("application/zip")
-    ) { uri ->
-        if (uri != null) {
-            scope.launch {
-                backupInProgress = true
-                val result = DataBackupManager.export(app, uri)
-                backupInProgress = false
-                Toast.makeText(
-                    app,
-                    result.fold(
-                        onSuccess = { app.getString(R.string.backup_success) },
-                        onFailure = { app.getString(R.string.backup_failed) }
-                    ),
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-        }
-    }
+
     var bottomBarHeightPixels by remember { mutableIntStateOf(0) }
     val bottomBarHeightDp = with(LocalDensity.current) { bottomBarHeightPixels.toDp() }
     val playerSheetState =
@@ -278,6 +255,19 @@ fun NavigationRoot(
                             )
                         }
 
+                        is LibraryScreenKey -> NavEntry(key) {
+                            LibraryScreen(
+                                sharedViewModel = sharedViewModel,
+                                onSettingsButtonPress = { backStack.add(SettingsScreenKey) },
+                                onProfilePress = { backStack.add(ProfileScreenKey) },
+                                onLogin = { backStack.add(AuthScreenKey) },
+                                onPlaylistPressed = { playlist ->
+                                    backStack.add(PlaylistScreenKey(playlistInfo = playlist))
+                                },
+                                application = app
+                            )
+                        }
+
                         is SearchScreenKey -> NavEntry(key) {
                             SearchScreen(
                                 application = app,
@@ -418,8 +408,6 @@ fun NavigationRoot(
         // letting Android show a bare "package conflicts" error.
         signatureMismatchApk?.let {
             SignatureMismatchDialog(
-                backupInProgress = backupInProgress,
-                onBackup = { backupLauncher.launch("laya-music-backup.zip") },
                 onUninstall = { launchUninstall(app) },
                 onDismiss = UpdateManager::dismissSignatureMismatch
             )

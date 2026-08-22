@@ -13,6 +13,9 @@ data object HomeScreenKey : NavKey
 data object SearchScreenKey : NavKey
 
 @Serializable
+data object LibraryScreenKey : NavKey
+
+@Serializable
 data object SettingsScreenKey : NavKey
 
 @Serializable
@@ -50,6 +53,10 @@ fun rememberScreenUiConfig(current: NavKey): ScreenUiConfig {
 
             SearchScreenKey -> ScreenUiConfig(
                 selectedTab = SearchScreenKey
+            )
+
+            LibraryScreenKey -> ScreenUiConfig(
+                selectedTab = LibraryScreenKey
             )
 
             SettingsScreenKey -> ScreenUiConfig(

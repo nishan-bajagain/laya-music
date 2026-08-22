@@ -28,7 +28,6 @@
     <string name="download">BAIXAR</string>
     <string name="open_settings">Abrir configurações</string>
     <string name="more">Mais</string>
-    <string name="join_discord_server">Entre no servidor do Discord</string>
     <string name="play_next">Reproduzir próxima</string>
     <string name="add_to_queue">Adicionar à fila</string>
     <string name="retry">Repetir</string>
@@ -36,10 +35,7 @@
     <string name="added_queue_toast">Música adicionada à fila</string>
     <string name="playing_now">Reproduzindo Agora</string>
     <string name="up_to_date_message">O aplicativo está atualizado !</string>
-    <string name="update_check_failed">Não foi possível verificar se há atualizações</string>
-    <string name="github_rate_limit_retry">Taxa limitada da API do GitHub. Tente novamente em %1$s.</string>
     <string name="minutes">%1$d minutes</string>
-    <string name="seconds">%1$d seconds</string>
     <string name="update_available">Atualização disponível</string>
     <string name="new_version_body">Está disponível uma nova versão (%1$s)</string>
     <string name="log_out">Encerrar Sessão</string>
@@ -47,12 +43,8 @@
     <string name="app_info">Informações do aplicativo</string>
     <string name="check_for_updates">Verificar se há atualizações</string>
     <string name="delete_downloads">Excluir todos os downloads</string>
-    <string name="clear_login_info">Limpar informações de login</string>
-    <string name="logged_in_message">Você está conectado à sua conta do YouTube</string>
-    <string name="logged_out_message">Você não está logado</string>
     <string name="account">conta</string>
     <string name="clear_data_message">Remover todas as músicas baixadas e dados armazenados em cache deste dispositivo</string>
-    <string name="clear_login_message">Limpa todas as contas salvas e informações de login</string>
     <string name="login_info_cleared">Informações de login limpas</string>
     <string name="downloads_cleared">Downloads limpos</string>
     <string name="invalid_navkey">Chave NavKey Inválida: %1$s</string>
@@ -60,10 +52,6 @@
     <string name="cancel">cancelar</string>
     <string name="remove_local_playlist">Remover playlist local</string>
     <string name="remove_local_confirm_text">Excluir os arquivos baixados para esta playlist? A playlist permanecerá disponível online.</string>
-    <string name="ignore">Ignorar</string>
-    <string name="change_update_channel">Alterar atualização do canal</string>
-    <string name="current_update_channel_body">Atualização atual do canal : %1$s</string>
-    <string name="beta_update_available">Atualização Beta Disponível</string>
     <string name="home">Residencial</string>
     <string name="search">Pesquisa</string>
     <string name="no_results">Nenhum Resultado</string>
@@ -98,11 +86,9 @@
     <string name="delete_playlist">Excluir playlist</string>
     <string name="delete_playlist_text">Tem certeza que deseja excluir esta playlist da sua conta do YouTube? Esta ação não pode ser revertida.</string>
     <string name="check_update_setting_description">Verifica se há novas atualizações no GitHub</string>
-    <string name="updates">Atualizações</string>
     <string name="current_version">Versão Atual</string>
     <string name="visibility">Visibilidade</string>
     <string name="auto_update_title">Verificação de Atualizações Automática</string>
-    <string name="auto_update_subtitle">Permite a verificação de atualizações automaticamente ao iniciar o aplicativo</string>
     <string name="sleep_timer">Tempo de inatividade</string>
     <string name="sleep_timer_active">Tempo de inatividade ativo</string>
     <string name="sleep_timer_remaining">restante</string>

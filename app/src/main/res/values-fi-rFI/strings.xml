@@ -28,7 +28,6 @@
     <string name="download">Lataa</string>
     <string name="open_settings">Avaa Asetukset</string>
     <string name="more">lisää</string>
-    <string name="join_discord_server">Liity Discord-palvelimeen</string>
     <string name="play_next">Toista seuraava</string>
     <string name="add_to_queue">Lisää jonoon</string>
     <string name="retry">Yritä Uudelleen</string>
@@ -36,10 +35,7 @@
     <string name="added_queue_toast">Kappale lisätty jonoon</string>
     <string name="playing_now">Toistetaan Nyt</string>
     <string name="up_to_date_message">Sovellus on ajan tasalla !</string>
-    <string name="update_check_failed">Päivitysten tarkistus epäonnistui</string>
-    <string name="github_rate_limit_retry">GitHub API rate limited . Yritä uudelleen %1$s.</string>
     <string name="minutes">%1$d minuuttia</string>
-    <string name="seconds">%1$d sekuntia</string>
     <string name="update_available">Päivitys Saatavilla</string>
     <string name="new_version_body">Uusi versio on saatavilla. (%1$s)</string>
     <string name="log_out">Kirjaudu Ulos</string>
@@ -47,12 +43,8 @@
     <string name="app_info">Sovelluksen Tiedot</string>
     <string name="check_for_updates">Tarkista päivitykset</string>
     <string name="delete_downloads">Poista kaikki lataukset</string>
-    <string name="clear_login_info">Tyhjennä kirjautumistiedot</string>
-    <string name="logged_in_message">Olet kirjautunut sisään YouTube-tilillesi</string>
-    <string name="logged_out_message">Et ole tällä hetkellä kirjautunut sisään</string>
     <string name="account">Tili</string>
     <string name="clear_data_message">Poista kaikki ladatut kappaleet ja välimuistissa olevat tiedot tältä laitteelta</string>
-    <string name="clear_login_message">Tyhjentää kaikki tallennetut tilit ja kirjautumistiedot</string>
     <string name="login_info_cleared">Kirjautumistiedot Tyhjennetty</string>
     <string name="downloads_cleared">Lataukset Tyhjennetty</string>
     <string name="invalid_navkey">Virheellinen NavKey : %1$s</string>
@@ -60,10 +52,6 @@
     <string name="cancel">Peruuta</string>
     <string name="remove_local_playlist">Poista paikallinen soittolista</string>
     <string name="remove_local_confirm_text">Poista ladatut tiedostot tälle soittolistalle? Soittolista pysyy saatavilla verkossa.</string>
-    <string name="ignore">Ohita</string>
-    <string name="change_update_channel">Muuta päivityskanavaa</string>
-    <string name="current_update_channel_body">Nykyinen päivityskanava : %1$s</string>
-    <string name="beta_update_available">Beta Päivitys Saatavilla</string>
     <string name="home">Koti</string>
     <string name="search">Etsi</string>
     <string name="no_results">Ei Tuloksia</string>
@@ -98,11 +86,9 @@
     <string name="delete_playlist">Poista Soittolista</string>
     <string name="delete_playlist_text">Oletko varma, että haluat poistaa tämän soittolistan YouTube-tililtäsi? Tätä toimintoa ei voi peruuttaa.</string>
     <string name="check_update_setting_description">Uusia päivityksiä GitHubista tarkistetaan</string>
-    <string name="updates">Päivitykset</string>
     <string name="current_version">Nykyinen Versio</string>
     <string name="visibility">Näkyvyys</string>
     <string name="auto_update_title">Automaattinen Päivityksen Tarkistus</string>
-    <string name="auto_update_subtitle">Mahdollistaa päivityksen tarkistamisen automaattisesti sovelluksen käynnistyessä</string>
     <string name="sleep_timer">Uniajastin</string>
     <string name="sleep_timer_active">Uniajastin Aktiivinen</string>
     <string name="sleep_timer_remaining">jäljellä</string>
